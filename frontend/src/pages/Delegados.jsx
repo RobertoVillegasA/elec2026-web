@@ -272,7 +272,13 @@ export default function Delegados() {
 
           try {
             await api.post('/api/usuarios', userData);
-            alert(`✅ Delegado registrado exitosamente. Usuario generado: ${username}, Contraseña: ${password}`);
+            alert(
+              `✅ Delegado registrado exitosamente.\n\n` +
+              `📋 DATOS DE ACCESO:\n` +
+              `👤 Usuario: ${username}\n` +
+              `🔑 Contraseña: ${password}\n\n` +
+              `⚠️ El delegado debe iniciar sesión en el sistema con estas credenciales.`
+            );
           } catch (userErr) {
             console.error('Error al crear usuario para delegado', userErr);
             alert('✅ Delegado registrado exitosamente, pero ocurrió un error al crear el usuario.');

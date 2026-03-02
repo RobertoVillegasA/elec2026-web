@@ -55,6 +55,60 @@ def listar_municipios(id_prov: int):
 def listar_recintos(id_muni: int):
     return get_recintos_by_municipio(id_muni)
 
+@router.get("/recintos/{id_recinto}")
+def obtener_recinto(id_recinto: int):
+    """Obtiene los detalles de un recinto incluyendo direccion, zona, latitud, longitud"""
+    try:
+        with DatabaseConnection() as conn:
+            if not conn:
+                raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
+            
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id_recinto, nombre, id_municipio, id_localidad, direccion, zona, latitud, longitud
+                FROM recintos
+                WHERE id_recinto = %s
+            """, (id_recinto,))
+            
+            recinto = cursor.fetchone()
+            
+            if not recinto:
+                raise HTTPException(status_code=404, detail="Recinto no encontrado")
+            
+            return recinto
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error al obtener recinto: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/localidades/{id_localidad}")
+def obtener_localidad(id_localidad: int):
+    """Obtiene los detalles de una localidad"""
+    try:
+        with DatabaseConnection() as conn:
+            if not conn:
+                raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
+            
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id_localidad, nombre, id_municipio
+                FROM localidades
+                WHERE id_localidad = %s
+            """, (id_localidad,))
+            
+            localidad = cursor.fetchone()
+            
+            if not localidad:
+                raise HTTPException(status_code=404, detail="Localidad no encontrada")
+            
+            return localidad
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error al obtener localidad: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/mesas/recinto/{id_recinto}")
 def listar_mesas(id_recinto: int):
     return get_mesas_by_recinto(id_recinto)
