@@ -53,3 +53,14 @@ frontend/dist/
 # Logs
 *.log
 logs/
+
+# Archivos temporales
+*.tmp
+*.swp
+*~
+
+# Google Credentials (SENSITIVE - NO SUBIR)
+backend/google_credentials.json
+backend/google_oauth_credentials.json
+backend/google_token.json
+backend/token.pickle
