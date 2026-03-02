@@ -73,3 +73,12 @@ app.include_router(geografia_router_resultados, prefix="/api/geografia")
 app.include_router(resultados_dashboard_router, prefix="/api/dashboard")
 app.include_router(cord_distrito_router, prefix="/api")
 app.include_router(cord_recinto_router, prefix="/api")
+
+# Health check endpoint (sin DB)
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "sistema-electoral-backend"}
+
+@app.get("/")
+def root():
+    return {"message": "Sistema Electoral Bolivia 2026 API", "docs": "/docs"}
