@@ -15,6 +15,10 @@ export default function EscrutinioGobernacion() {
   const [cargos, setCargos] = useState({});
   const [organizaciones, setOrganizaciones] = useState({});
 
+  // Búsqueda de recinto
+  const [busquedaRecinto, setBusquedaRecinto] = useState('');
+  const [recintosFiltrados, setRecintosFiltrados] = useState([]);
+
   // Estados de formulario
   const [formData, setFormData] = useState({
     id_departamento: '',
@@ -158,17 +162,35 @@ export default function EscrutinioGobernacion() {
   useEffect(() => {
     if (formData.id_municipio) {
       api.get(`/api/recintos/municipio/${formData.id_municipio}`)
-        .then(res => setRecintos(res.data))
+        .then(res => {
+          setRecintos(res.data);
+          setRecintosFiltrados(Object.entries(res.data).map(([nombre, id]) => ({ id, nombre })));
+          setFormData(prev => ({
+            ...prev,
+            id_recinto: '',
+            id_mesa: ''
+          }));
+          setMesas({});
+          setCantidadInscritos(0);
+          setBusquedaRecinto('');
+        })
         .catch(err => console.error("Error al cargar recintos", err));
-      setFormData(prev => ({
-        ...prev,
-        id_recinto: '',
-        id_mesa: ''
-      }));
-      setMesas({});
-      setCantidadInscritos(0);
     }
   }, [formData.id_municipio]);
+
+  // Filtrar recintos cuando cambia la búsqueda
+  useEffect(() => {
+    const recintosArray = Object.entries(recintos).map(([nombre, id]) => ({ id, nombre }));
+    if (busquedaRecinto.trim() === '') {
+      setRecintosFiltrados(recintosArray);
+    } else {
+      const termino = busquedaRecinto.toLowerCase();
+      const filtrados = recintosArray.filter(rec =>
+        rec.nombre.toLowerCase().includes(termino)
+      );
+      setRecintosFiltrados(filtrados);
+    }
+  }, [busquedaRecinto, recintos]);
 
   // Cargar mesas cuando cambia recinto
   useEffect(() => {
@@ -462,13 +484,35 @@ export default function EscrutinioGobernacion() {
               options={municipios}
               disabled={!formData.id_provincia}
             />
-            <SelectField
-              label="Recinto"
-              value={formData.id_recinto}
-              onChange={(e) => setFormData({ ...formData, id_recinto: e.target.value })}
-              options={recintos}
-              disabled={!formData.id_municipio}
-            />
+            {/* Recinto con búsqueda */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">Recinto</label>
+              <input
+                type="text"
+                value={busquedaRecinto}
+                onChange={(e) => setBusquedaRecinto(e.target.value)}
+                placeholder="🔍 Buscar recinto..."
+                className="w-full p-2 border border-gray-300 rounded-lg mb-2 text-sm"
+                disabled={!formData.id_municipio}
+              />
+              <select
+                value={formData.id_recinto}
+                onChange={(e) => setFormData({ ...formData, id_recinto: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm max-h-48 overflow-y-auto"
+                disabled={!formData.id_municipio}
+                size="4"
+              >
+                <option value="">Seleccione un recinto...</option>
+                {recintosFiltrados.map(rec => (
+                  <option key={rec.id} value={rec.id}>{rec.nombre}</option>
+                ))}
+              </select>
+              {recintosFiltrados.length > 0 && recintosFiltrados.length < recintos.length && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {recintosFiltrados.length} recinto(s) encontrado(s) de {recintos.length}
+                </p>
+              )}
+            </div>
             <SelectField
               label="Mesa"
               value={formData.id_mesa}

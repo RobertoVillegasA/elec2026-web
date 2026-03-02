@@ -268,29 +268,64 @@ async def obtener_usuario(id_usuario: int):
 
 @router.post("/usuarios")
 async def crear_usuario(usuario: UsuarioCreate):
-    """Crea un nuevo usuario"""
+    """Crea un nuevo usuario. Si el username ya existe, agrega la inicial del nombre automáticamente"""
     try:
         if not usuario.username or not usuario.username.strip():
             raise HTTPException(status_code=400, detail="El nombre de usuario no puede estar vacío")
-        
-        username = usuario.username.strip()
-        
+
+        username_base = usuario.username.strip()
+        username = username_base
+
         with DatabaseConnection() as conn:
             if not conn:
                 raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
-            
+
             cursor = conn.cursor()
-            
-            # Verificar que el usuario no exista
+
+            # Verificar si el usuario ya existe
             cursor.execute("SELECT id_usuario FROM usuarios WHERE username = %s", (username,))
             if cursor.fetchone():
-                raise HTTPException(status_code=400, detail=f"El usuario '{username}' ya existe")
-            
+                # El usuario ya existe, generar username con inicial del nombre
+                if usuario.fullname:
+                    # Obtener la primera letra del nombre completo
+                    nombre_limpio = usuario.fullname.strip()
+                    inicial = nombre_limpio[0].upper() if nombre_limpio else 'X'
+                    
+                    # Intentar con la inicial + username
+                    username = f"{inicial}{username_base}"
+                    cursor.execute("SELECT id_usuario FROM usuarios WHERE username = %s", (username,))
+                    
+                    if cursor.fetchone():
+                        # Todavía existe, agregar número
+                        contador = 1
+                        while True:
+                            username = f"{inicial}{username_base}{contador}"
+                            cursor.execute("SELECT id_usuario FROM usuarios WHERE username = %s", (username,))
+                            if not cursor.fetchone():
+                                break
+                            contador += 1
+                            if contador > 100:  # Límite de seguridad
+                                raise HTTPException(status_code=400, detail=f"No se pudo generar un username único para '{username_base}'")
+                    
+                    print(f"⚠️ Username '{username_base}' ya existía. Se usó: '{username}'")
+                else:
+                    # No hay nombre completo, intentar con números
+                    contador = 1
+                    while True:
+                        username = f"{username_base}{contador}"
+                        cursor.execute("SELECT id_usuario FROM usuarios WHERE username = %s", (username,))
+                        if not cursor.fetchone():
+                            print(f"⚠️ Username '{username_base}' ya existía. Se usó: '{username}'")
+                            break
+                        contador += 1
+                        if contador > 100:  # Límite de seguridad
+                            raise HTTPException(status_code=400, detail=f"No se pudo generar un username único para '{username_base}'")
+
             # Verificar que el rol existe
             cursor.execute("SELECT id_rol FROM roles WHERE id_rol = %s", (usuario.id_rol,))
             if not cursor.fetchone():
                 raise HTTPException(status_code=400, detail="El rol especificado no existe")
-            
+
             # Crear usuario con hash bcrypt (importado en db.py)
             import bcrypt
             password_hash = bcrypt.hashpw(usuario.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -298,13 +333,16 @@ async def crear_usuario(usuario: UsuarioCreate):
                 INSERT INTO usuarios (username, fullname, password_hash, id_rol, id_departamento)
                 VALUES (%s, %s, %s, %s, %s)
             """, (username, usuario.fullname, password_hash, usuario.id_rol, usuario.id_departamento))
-            
+
             cursor.close()
             return {
                 "message": "✅ Usuario creado exitosamente",
-                "id_usuario": cursor.lastrowid
+                "id_usuario": cursor.lastrowid,
+                "username": username,
+                "username_original": username_base,
+                "username_modificado": username != username_base
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:

@@ -22,8 +22,10 @@ export default function AdminActas() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  // Cargar actas al iniciar
+  const [votosDetalle, setVotosDetalle] = useState([]);
+  const [votosEditables, setVotosEditables] = useState([]);
+  const [modalActa, setModalActa] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     loadActas();
   }, []);
@@ -93,59 +95,44 @@ export default function AdminActas() {
     setSearchTerm('');
   };
 
-  const [imagenesActa, setImagenesActa] = useState([]);
-  const [imagenesHojaTrabajo, setImagenesHojaTrabajo] = useState([]);
-  const [votosDetalle, setVotosDetalle] = useState([]);
-  const [modalActa, setModalActa] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-
   const handleEdit = async (acta) => {
     try {
       setEditingId(acta.id_acta);
-      
-      // Set the main acta data
+
+      // Set the main acta data con TODOS los campos
       setEditForm({
         codigo_acta: acta.codigo_acta || '',
         total_actas: acta.total_actas || 0,
+        f_acta: acta.f_acta || '',
+        f_h_trabajo: acta.f_h_trabajo || '',
         votos_blancos_g: acta.votos_blancos_g || 0,
         votos_nulos_g: acta.votos_nulos_g || 0,
-        votos_blancos_p: acta.votos_blancos_p || 0,
-        votos_nulos_p: acta.votos_nulos_p || 0,
-        votos_blancos_t: acta.votos_blancos_t || 0,
-        votos_nulos_t: acta.votos_nulos_t || 0,
         votos_blancos_a: acta.votos_blancos_a || 0,
         votos_nulos_a: acta.votos_nulos_a || 0,
         votos_blancos_c: acta.votos_blancos_c || 0,
         votos_nulos_c: acta.votos_nulos_c || 0,
+        votos_blancos_p: acta.votos_blancos_p || 0,
+        votos_nulos_p: acta.votos_nulos_p || 0,
+        votos_blancos_t: acta.votos_blancos_t || 0,
+        votos_nulos_t: acta.votos_nulos_t || 0,
         observaciones: acta.observaciones || '',
         tipo_papeleta: acta.tipo_papeleta || ''
       });
 
-      // Fetch voting details for this acta
+      // Fetch voting details for this acta y preparar votos editables
       try {
         const votosRes = await api.get(`/api/votos_detalle/acta/${acta.id_acta}`);
-        setVotosDetalle(votosRes.data || []);
+        const votosData = votosRes.data || [];
+        setVotosDetalle(votosData);
+        // Crear copia editable de los votos
+        setVotosEditables(votosData.map(v => ({
+          ...v,
+          votos_cantidad: v.votos_cantidad || 0
+        })));
       } catch (votosErr) {
         console.error('Error al cargar votos detalle:', votosErr);
         setVotosDetalle([]);
-      }
-
-      // Fetch images for this acta from f_acta table
-      try {
-        const imgActaRes = await api.get(`/api/fotos_acta/acta/${acta.id_acta}`);
-        setImagenesActa(imgActaRes.data || []);
-      } catch (imgActaErr) {
-        console.error('Error al cargar imágenes de acta:', imgActaErr);
-        setImagenesActa([]);
-      }
-
-      // Fetch images for this acta's hoja de trabajo from f_h_trabajo table
-      try {
-        const imgHTrabRes = await api.get(`/api/fotos_h_trabajo/acta/${acta.id_acta}`);
-        setImagenesHojaTrabajo(imgHTrabRes.data || []);
-      } catch (imgHTrabErr) {
-        console.error('Error al cargar imágenes de hoja de trabajo:', imgHTrabErr);
-        setImagenesHojaTrabajo([]);
+        setVotosEditables([]);
       }
 
       setError('');
@@ -169,24 +156,6 @@ export default function AdminActas() {
         setVotosDetalle([]);
       }
 
-      // Fetch images for this acta from f_acta table
-      try {
-        const imgActaRes = await api.get(`/api/fotos_acta/acta/${acta.id_acta}`);
-        setImagenesActa(imgActaRes.data || []);
-      } catch (imgActaErr) {
-        console.error('Error al cargar imágenes de acta:', imgActaErr);
-        setImagenesActa([]);
-      }
-
-      // Fetch images for this acta's hoja de trabajo from f_h_trabajo table
-      try {
-        const imgHTrabRes = await api.get(`/api/fotos_h_trabajo/acta/${acta.id_acta}`);
-        setImagenesHojaTrabajo(imgHTrabRes.data || []);
-      } catch (imgHTrabErr) {
-        console.error('Error al cargar imágenes de hoja de trabajo:', imgHTrabErr);
-        setImagenesHojaTrabajo([]);
-      }
-
       setShowModal(true);
     } catch (err) {
       console.error('Error al cargar detalles:', err);
@@ -197,16 +166,12 @@ export default function AdminActas() {
     setShowModal(false);
     setModalActa(null);
     setVotosDetalle([]);
-    setImagenesActa([]);
-    setImagenesHojaTrabajo([]);
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditForm({});
-    setVotosDetalle([]);
-    setImagenesActa([]);
-    setImagenesHojaTrabajo([]);
+    setVotosEditables([]);
   };
 
   const handleSaveEdit = async (id_acta) => {
@@ -219,7 +184,7 @@ export default function AdminActas() {
 
       // Prepare data based on acta type
       const updateData = { ...editForm };
-      
+
       // If acta is SUBNACIONAL or NACIONAL, ensure municipal fields are zero or minimal
       if (updateData.tipo_papeleta === 'SUBNACIONAL' || updateData.tipo_papeleta === 'NACIONAL') {
         updateData.votos_blancos_a = updateData.votos_blancos_a || 0;
@@ -227,7 +192,7 @@ export default function AdminActas() {
         updateData.votos_blancos_c = updateData.votos_blancos_c || 0;
         updateData.votos_nulos_c = updateData.votos_nulos_c || 0;
       }
-      
+
       // If acta is MUNICIPAL, ensure gubernatorial fields are zero or minimal
       if (updateData.tipo_papeleta === 'MUNICIPAL') {
         updateData.votos_blancos_g = updateData.votos_blancos_g || 0;
@@ -238,7 +203,25 @@ export default function AdminActas() {
         updateData.votos_nulos_t = updateData.votos_nulos_t || 0;
       }
 
+      // Actualizar acta
       await api.put(`/api/actas/${id_acta}`, updateData);
+
+      // Actualizar votos_detalle
+      // Primero eliminar todos los votos existentes
+      await api.delete(`/api/votos_detalle/acta/${id_acta}/all`);
+      
+      // Luego insertar los votos editados (solo los que tienen cantidad > 0)
+      for (const voto of votosEditables) {
+        if (voto.votos_cantidad > 0) {
+          await api.post('/api/votos_detalle', {
+            id_acta: id_acta,
+            id_organizacion: voto.id_organizacion,
+            votos_cantidad: voto.votos_cantidad,
+            tipo_voto: voto.tipo_voto
+          });
+        }
+      }
+
       setSuccess('✅ Acta actualizada exitosamente');
 
       // Recargar lista
@@ -246,6 +229,7 @@ export default function AdminActas() {
         loadActas();
         setEditingId(null);
         setEditForm({});
+        setVotosEditables([]);
       }, 1000);
     } catch (err) {
       console.error('Error al actualizar acta', err);
@@ -374,7 +358,11 @@ export default function AdminActas() {
                 <th className="py-3 px-4 text-left font-semibold">Nulos Gob.</th>
                 <th className="py-3 px-4 text-left font-semibold">Blancos Alc.</th>
                 <th className="py-3 px-4 text-left font-semibold">Nulos Alc.</th>
+                <th className="py-3 px-4 text-left font-semibold">Blancos Conc.</th>
+                <th className="py-3 px-4 text-left font-semibold">Nulos Conc.</th>
                 <th className="py-3 px-4 text-left font-semibold">Total Actas</th>
+                <th className="py-3 px-4 text-left font-semibold">📄 f_acta</th>
+                <th className="py-3 px-4 text-left font-semibold">📝 f_h_trabajo</th>
                 <th className="py-3 px-4 text-left font-semibold">Fecha</th>
                 <th className="py-3 px-4 text-center font-semibold">Acciones</th>
               </tr>
@@ -382,7 +370,7 @@ export default function AdminActas() {
             <tbody>
               {filteredActas.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="text-center py-6 text-gray-500">
+                  <td colSpan="16" className="text-center py-6 text-gray-500">
                     📭 No se encontraron actas
                   </td>
                 </tr>
@@ -391,6 +379,7 @@ export default function AdminActas() {
                   <React.Fragment key={acta.id_acta}>
                     {editingId === acta.id_acta ? (
                       // FILA DE EDICIÓN
+                      <React.Fragment>
                       <tr className="bg-blue-50 border-b-2 border-blue-200">
                         <td className="py-3 px-4"></td>
                         <td className="py-3 px-4">{acta.id_acta}</td>
@@ -416,8 +405,8 @@ export default function AdminActas() {
                             <option value="MUNICIPAL">Municipal</option>
                           </select>
                         </td>
-                        {/* Show gubernatorial inputs only for SUBNACIONAL/NACIONAL actas */}
-                        {(editForm.tipo_papeleta === 'SUBNACIONAL' || editForm.tipo_papeleta === 'NACIONAL') ? (
+                        {/* Show gubernatorial inputs for SUBNACIONAL, NACIONAL, or GENERAL actas */}
+                        {(editForm.tipo_papeleta === 'SUBNACIONAL' || editForm.tipo_papeleta === 'NACIONAL' || editForm.tipo_papeleta === 'GENERAL') ? (
                           <>
                             <td className="py-3 px-4">
                               <input
@@ -443,8 +432,8 @@ export default function AdminActas() {
                           </>
                         )}
 
-                        {/* Show municipal inputs only for MUNICIPAL actas */}
-                        {(editForm.tipo_papeleta === 'MUNICIPAL') ? (
+                        {/* Show municipal inputs for MUNICIPAL or GENERAL actas */}
+                        {(editForm.tipo_papeleta === 'MUNICIPAL' || editForm.tipo_papeleta === 'GENERAL') ? (
                           <>
                             <td className="py-3 px-4">
                               <input
@@ -462,9 +451,27 @@ export default function AdminActas() {
                                 className="w-16 p-2 border border-gray-300 rounded text-center"
                               />
                             </td>
+                            <td className="py-3 px-4">
+                              <input
+                                type="number"
+                                value={editForm.votos_blancos_c || 0}
+                                onChange={e => setEditForm({ ...editForm, votos_blancos_c: parseInt(e.target.value) || 0 })}
+                                className="w-16 p-2 border border-gray-300 rounded text-center"
+                              />
+                            </td>
+                            <td className="py-3 px-4">
+                              <input
+                                type="number"
+                                value={editForm.votos_nulos_c || 0}
+                                onChange={e => setEditForm({ ...editForm, votos_nulos_c: parseInt(e.target.value) || 0 })}
+                                className="w-16 p-2 border border-gray-300 rounded text-center"
+                              />
+                            </td>
                           </>
                         ) : (
                           <>
+                            <td className="py-3 px-4 text-center text-gray-400">-</td>
+                            <td className="py-3 px-4 text-center text-gray-400">-</td>
                             <td className="py-3 px-4 text-center text-gray-400">-</td>
                             <td className="py-3 px-4 text-center text-gray-400">-</td>
                           </>
@@ -475,6 +482,24 @@ export default function AdminActas() {
                             value={editForm.total_actas || 0}
                             onChange={e => setEditForm({ ...editForm, total_actas: parseInt(e.target.value) || 0 })}
                             className="w-16 p-2 border border-gray-300 rounded text-center"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editForm.f_acta || ''}
+                            onChange={e => setEditForm({ ...editForm, f_acta: e.target.value })}
+                            className="w-32 p-2 border border-gray-300 rounded text-xs"
+                            placeholder="ej: a_001,a_001_1"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={editForm.f_h_trabajo || ''}
+                            onChange={e => setEditForm({ ...editForm, f_h_trabajo: e.target.value })}
+                            className="w-32 p-2 border border-gray-300 rounded text-xs"
+                            placeholder="ej: h_001,h_001_1"
                           />
                         </td>
                         <td className="py-3 px-4">{new Date(acta.fecha_registro).toLocaleDateString()}</td>
@@ -493,6 +518,46 @@ export default function AdminActas() {
                           </button>
                         </td>
                       </tr>
+                      {/* Fila expandida para editar votos por organizacion */}
+                      <tr className="bg-blue-50">
+                        <td colSpan="16" className="py-4 px-4">
+                          <div className="bg-white p-4 rounded border border-blue-200">
+                            <h4 className="font-semibold text-blue-800 mb-3">📊 Votos por Organización Política (Editar)</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
+                              {votosEditables.length > 0 ? (
+                                votosEditables.map((voto, index) => (
+                                  <div key={index} className="bg-gray-50 p-3 rounded border border-gray-200">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <div className="flex-1">
+                                        <p className="font-medium text-gray-800 text-sm">{voto.nombre || 'N/A'}</p>
+                                        <p className="text-xs text-gray-600">{voto.sigla || 'N/A'}</p>
+                                        <p className="text-xs text-gray-500">{voto.tipo_voto || ''}</p>
+                                      </div>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={voto.votos_cantidad || 0}
+                                        onChange={(e) => {
+                                          const newVotos = [...votosEditables];
+                                          newVotos[index].votos_cantidad = parseInt(e.target.value) || 0;
+                                          setVotosEditables(newVotos);
+                                        }}
+                                        className="w-20 p-2 border border-gray-300 rounded text-center font-bold text-blue-600"
+                                        placeholder="0"
+                                      />
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-gray-500 italic text-sm col-span-full">
+                                  ⚠️ No hay votos registrados. Los votos se cargan automáticamente al editar.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      </React.Fragment>
                     ) : (
                       // FILA NORMAL
                       <React.Fragment>
@@ -511,8 +576,8 @@ export default function AdminActas() {
                               {acta.tipo_papeleta}
                             </span>
                           </td>
-                          {/* Show gubernatorial data only for SUBNACIONAL/NACIONAL actas */}
-                          {(acta.tipo_papeleta === 'SUBNACIONAL' || acta.tipo_papeleta === 'NACIONAL') ? (
+                          {/* Show gubernatorial data for SUBNACIONAL, NACIONAL, or GENERAL actas */}
+                          {(acta.tipo_papeleta === 'SUBNACIONAL' || acta.tipo_papeleta === 'NACIONAL' || acta.tipo_papeleta === 'GENERAL') ? (
                             <>
                               <td className="py-3 px-4">{acta.votos_blancos_g || 0}</td>
                               <td className="py-3 px-4">{acta.votos_nulos_g || 0}</td>
@@ -524,19 +589,29 @@ export default function AdminActas() {
                             </>
                           )}
 
-                          {/* Show municipal data only for MUNICIPAL actas */}
-                          {(acta.tipo_papeleta === 'MUNICIPAL') ? (
+                          {/* Show municipal data for MUNICIPAL or GENERAL actas */}
+                          {(acta.tipo_papeleta === 'MUNICIPAL' || acta.tipo_papeleta === 'GENERAL') ? (
                             <>
                               <td className="py-3 px-4">{acta.votos_blancos_a || 0}</td>
                               <td className="py-3 px-4">{acta.votos_nulos_a || 0}</td>
+                              <td className="py-3 px-4">{acta.votos_blancos_c || 0}</td>
+                              <td className="py-3 px-4">{acta.votos_nulos_c || 0}</td>
                             </>
                           ) : (
                             <>
                               <td className="py-3 px-4 text-center text-gray-400">-</td>
                               <td className="py-3 px-4 text-center text-gray-400">-</td>
+                              <td className="py-3 px-4 text-center text-gray-400">-</td>
+                              <td className="py-3 px-4 text-center text-gray-400">-</td>
                             </>
                           )}
                           <td className="py-3 px-4">{acta.total_actas || 0}</td>
+                          <td className="py-3 px-4 text-xs font-mono text-gray-600">
+                            {acta.f_acta || '-'}
+                          </td>
+                          <td className="py-3 px-4 text-xs font-mono text-gray-600">
+                            {acta.f_h_trabajo || '-'}
+                          </td>
                           <td className="py-3 px-4 text-sm">
                             {new Date(acta.fecha_registro).toLocaleDateString()}
                           </td>
@@ -574,7 +649,7 @@ export default function AdminActas() {
                         {/* FILA EXPANDIDA - DETALLES DE VOTOS */}
                         {expandedActa === acta.id_acta && (
                           <tr className="bg-blue-50 border-b-2 border-blue-200">
-                            <td colSpan="11" className="py-4 px-6">
+                            <td colSpan="14" className="py-4 px-6">
                               <div className="bg-white p-4 rounded border border-blue-200">
                                 <h4 className="font-semibold text-blue-800 mb-3">📊 Detalles de Votos por Cargo Electoral</h4>
                                 
@@ -590,8 +665,8 @@ export default function AdminActas() {
                                     </div>
                                   </div>
 
-                                  {/* Gubernatorial positions (show only for SUBNACIONAL actas) */}
-                                  {(acta.tipo_papeleta === 'SUBNACIONAL' || acta.tipo_papeleta === 'NACIONAL') && (
+                                  {/* Gubernatorial positions (show only for SUBNACIONAL, NACIONAL, or GENERAL actas) */}
+                                  {(acta.tipo_papeleta === 'SUBNACIONAL' || acta.tipo_papeleta === 'NACIONAL' || acta.tipo_papeleta === 'GENERAL') && (
                                     <>
                                       <div className="bg-blue-50 p-3 rounded border border-blue-200">
                                         <h5 className="font-semibold text-blue-700 mb-2">🏛️ Gobernador</h5>
@@ -637,8 +712,8 @@ export default function AdminActas() {
                                     </>
                                   )}
 
-                                  {/* Municipal positions (show only for MUNICIPAL actas) */}
-                                  {(acta.tipo_papeleta === 'MUNICIPAL') && (
+                                  {/* Municipal positions (show only for MUNICIPAL or GENERAL actas) */}
+                                  {(acta.tipo_papeleta === 'MUNICIPAL' || acta.tipo_papeleta === 'GENERAL') && (
                                     <>
                                       <div className="bg-green-50 p-3 rounded border border-green-200">
                                         <h5 className="font-semibold text-green-700 mb-2">🏘️ Alcalde</h5>
@@ -671,7 +746,7 @@ export default function AdminActas() {
                                   )}
 
                                   {/* Show message if no relevant data for this acta type */}
-                                  {acta.tipo_papeleta !== 'SUBNACIONAL' && acta.tipo_papeleta !== 'NACIONAL' && acta.tipo_papeleta !== 'MUNICIPAL' && (
+                                  {acta.tipo_papeleta !== 'SUBNACIONAL' && acta.tipo_papeleta !== 'NACIONAL' && acta.tipo_papeleta !== 'MUNICIPAL' && acta.tipo_papeleta !== 'GENERAL' && (
                                     <div className="col-span-full bg-yellow-50 p-4 rounded border border-yellow-200 text-center">
                                       <p className="text-yellow-700">No se encontraron datos específicos para este tipo de acta: {acta.tipo_papeleta}</p>
                                     </div>
@@ -986,29 +1061,23 @@ export default function AdminActas() {
                 </div>
               </div>
 
-              {/* Imágenes de Acta */}
+              {/* Imágenes de Acta - Lista de nombres */}
               <div className="mb-6">
                 <h3 className="font-semibold text-lg text-gray-800 mb-3">📸 Imágenes de Acta</h3>
-                {imagenesActa && imagenesActa.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {imagenesActa.map((img, index) => (
-                      <div key={img.id_foto_acta || img.id_acta || index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Imagen {index + 1}</p>
-                        {img.url_imagen ? (
-                          <a href={img.url_imagen} target="_blank" rel="noopener noreferrer">
-                            <img
-                              src={img.url_imagen}
-                              alt={`Acta ${index + 1}`}
-                              className="w-full h-40 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-90"
-                            />
-                          </a>
-                        ) : (
-                          <div className="w-full h-40 flex items-center justify-center bg-gray-200 rounded border border-gray-300">
-                            <span className="text-gray-500">No disponible</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                {modalActa.f_acta ? (
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p className="text-sm text-gray-600 mb-2">Archivos registrados:</p>
+                    <ul className="space-y-1">
+                      {modalActa.f_acta.split(',').map((nombre, index) => (
+                        <li key={index} className="flex items-center gap-2 text-sm">
+                          <span className="text-blue-600">📄</span>
+                          <span className="font-mono text-gray-700">{nombre.trim()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-gray-500 mt-3">
+                      Total: {modalActa.f_acta.split(',').length} archivo(s)
+                    </p>
                   </div>
                 ) : (
                   <div className="bg-yellow-50 p-4 rounded border border-yellow-200 text-center">
@@ -1017,29 +1086,23 @@ export default function AdminActas() {
                 )}
               </div>
 
-              {/* Imágenes de Hoja de Trabajo */}
+              {/* Imágenes de Hoja de Trabajo - Lista de nombres */}
               <div>
                 <h3 className="font-semibold text-lg text-gray-800 mb-3">📄 Imágenes de Hoja de Trabajo</h3>
-                {imagenesHojaTrabajo && imagenesHojaTrabajo.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {imagenesHojaTrabajo.map((img, index) => (
-                      <div key={img.id_foto_h_trabajo || img.id_acta || index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Hoja Trabajo {index + 1}</p>
-                        {img.url_imagen ? (
-                          <a href={img.url_imagen} target="_blank" rel="noopener noreferrer">
-                            <img
-                              src={img.url_imagen}
-                              alt={`Hoja Trabajo ${index + 1}`}
-                              className="w-full h-40 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-90"
-                            />
-                          </a>
-                        ) : (
-                          <div className="w-full h-40 flex items-center justify-center bg-gray-200 rounded border border-gray-300">
-                            <span className="text-gray-500">No disponible</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                {modalActa.f_h_trabajo ? (
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p className="text-sm text-gray-600 mb-2">Archivos registrados:</p>
+                    <ul className="space-y-1">
+                      {modalActa.f_h_trabajo.split(',').map((nombre, index) => (
+                        <li key={index} className="flex items-center gap-2 text-sm">
+                          <span className="text-green-600">📝</span>
+                          <span className="font-mono text-gray-700">{nombre.trim()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-gray-500 mt-3">
+                      Total: {modalActa.f_h_trabajo.split(',').length} archivo(s)
+                    </p>
                   </div>
                 ) : (
                   <div className="bg-yellow-50 p-4 rounded border border-yellow-200 text-center">

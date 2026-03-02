@@ -11,4 +11,4 @@ Sistema de gestión electoral para elecciones subnacionales 2026.
 
 - Backend: Railway / Render
 - Frontend: Railway / Vercel
-- Base de datos: MySQL externo (`import-as.com`)
+- Base de datos: MySQL externo 

@@ -7,6 +7,7 @@ import DashboardDelegado from './pages/DashboardDelegado';
 import Escrutinio from './pages/Escrutinio';
 import EscrutinioGobernacion from './pages/EscrutinioGobernacion';
 import EscrutinioMunicipal from './pages/EscrutinioMunicipal';
+import EscrutinioGeneral from './pages/EscrutinioGeneral';
 import Candidatos from './pages/Candidatos';
 import Delegados from './pages/Delegados';
 import GeoAdmin from './pages/GeoAdmin';
@@ -18,6 +19,7 @@ import GestionUsuarios from './pages/GestionUsuarios';
 import GestionOrganizaciones from './pages/GestionOrganizaciones';
 import GestionCordDistrito from './pages/GestionCordDistrito';
 import GestionCordRecinto from './pages/GestionCordRecinto';
+import MapaGeografico from './pages/MapaGeografico';
 
 // Función para decodificar el token JWT y verificar si ha expirado
 const isTokenExpired = (token) => {
@@ -143,6 +145,10 @@ function App() {
 		  element={isAuthenticated ? <EscrutinioSubnacional /> : <Navigate to="/login" />}
 		/>
         <Route
+          path="/escrutinio/general"
+          element={isAuthenticated ? <EscrutinioGeneral /> : <Navigate to="/login" />}
+        />
+        <Route
           path="/candidatos"
           element={isAuthenticated ? <Candidatos /> : <Navigate to="/login" />}
         />
@@ -181,6 +187,10 @@ function App() {
 		<Route
 		  path="/gestion-coord-recinto"
 		  element={isAuthenticated ? <GestionCordRecinto /> : <Navigate to="/login" />}
+        />
+		<Route
+		  path="/mapa-geografico"
+		  element={isAuthenticated ? <MapaGeografico /> : <Navigate to="/login" />}
         />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>

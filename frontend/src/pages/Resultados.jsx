@@ -1213,7 +1213,7 @@ export default function Resultados() {
           </div>
 
           {/* Visualización de resultados por categoría electoral */}
-          {resultados.length > 0 && (
+          {(resumen.gobernador.total_actas > 0 || resumen.alcalde.total_actas > 0 || resumen.concejal.total_actas > 0) && (
             <div className="bg-white p-6 rounded-lg shadow mb-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">📊 Visualización de Resultados por Categoría Electoral</h2>
@@ -1473,7 +1473,7 @@ export default function Resultados() {
             </div>
           )}
 
-          {resultados.length === 0 && !loading && (
+          {(resumen.gobernador.total_actas === 0 && resumen.alcalde.total_actas === 0 && resumen.concejal.total_actas === 0) && !loading && (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-6 py-8 rounded-lg text-center">
               <p>No hay resultados disponibles. Seleccione un área geográfica para ver los datos.</p>
             </div>

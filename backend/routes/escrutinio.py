@@ -1,8 +1,10 @@
 # backend/routes/escrutinio.py
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form
 from pydantic import BaseModel
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from db import DatabaseConnection
+import asyncio
+import time
 
 router = APIRouter()
 
@@ -143,6 +145,7 @@ async def listar_actas():
                     a.votos_blancos_p, a.votos_nulos_p,
                     a.votos_blancos_t, a.votos_nulos_t,
                     a.total_actas,
+                    a.f_acta, a.f_h_trabajo,
                     a.observaciones, a.usuario_registro, a.fecha_registro,
                     m.numero_mesa,
                     r.nombre AS nombre_recinto,
@@ -646,7 +649,7 @@ async def obtener_votos_detalle_acta(id_acta: int):
                 raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
 
             cursor = conn.cursor(dictionary=True)
-            
+
             # Obtener votos detalle para la acta específica
             cursor.execute("""
                 SELECT
@@ -659,14 +662,59 @@ async def obtener_votos_detalle_acta(id_acta: int):
                 WHERE vd.id_acta = %s
                 ORDER BY vd.votos_cantidad DESC
             """, (id_acta,))
-            
+
             votos_detalle = cursor.fetchall()
-            
+
             cursor.close()
             return votos_detalle
 
     except Exception as e:
         print(f"❌ Error al obtener votos detalle: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== ELIMINAR TODOS LOS VOTOS DE UN ACTA ==========
+@router.delete("/votos_detalle/acta/{id_acta}/all")
+async def eliminar_todos_votos_acta(id_acta: int):
+    """Elimina todos los votos de una acta específica."""
+    try:
+        with DatabaseConnection() as conn:
+            if not conn:
+                raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
+
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM votos_detalle WHERE id_acta = %s", (id_acta,))
+            conn.commit()
+            cursor.close()
+
+            return {"message": "Votos eliminados exitosamente", "id_acta": id_acta}
+
+    except Exception as e:
+        print(f"❌ Error al eliminar votos: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== CREAR VOTO DETALLE ==========
+@router.post("/votos_detalle")
+async def crear_voto_detalle(id_acta: int, id_organizacion: int, votos_cantidad: int, tipo_voto: str):
+    """Crea un voto detalle para una organización en una acta."""
+    try:
+        with DatabaseConnection() as conn:
+            if not conn:
+                raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
+
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO votos_detalle (id_acta, id_organizacion, votos_cantidad, tipo_voto)
+                VALUES (%s, %s, %s, %s)
+            """, (id_acta, id_organizacion, votos_cantidad, tipo_voto))
+            conn.commit()
+            cursor.close()
+
+            return {"message": "Voto registrado exitosamente"}
+
+    except Exception as e:
+        print(f"❌ Error al crear voto detalle: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1058,26 +1106,56 @@ async def guardar_acta_municipal(
     user_id: int = Form(...),
     votos_alcalde: str = Form(...),  # JSON string
     votos_concejal: str = Form(...),  # JSON string
-    f_acta: UploadFile = File(None),
-    f_h_trabajo: UploadFile = File(None)
+    f_acta: List[UploadFile] = File(None),  # Múltiples imágenes
+    f_h_trabajo: List[UploadFile] = File(None)  # Múltiples imágenes
 ):
     """
     Guarda una acta municipal ÚNICA para ALCALDE + CONCEJAL
     - Un solo codigo_acta
     - Votos separados para cada cargo por organización
     - Registra cargo_id en la acta para cada votación
+    - Soporta múltiples imágenes que se suben a Google Drive
     """
     try:
         import json
         votos_alcalde_dict = json.loads(votos_alcalde)
         votos_concejal_dict = json.loads(votos_concejal)
 
-        f_acta_data = await f_acta.read() if f_acta else None
-        f_h_trabajo_data = await f_h_trabajo.read() if f_h_trabajo else None
+        # Procesar múltiples imágenes de acta
+        f_acta_filenames = []
+        if f_acta:
+            acta_images_data = []
+            for file in f_acta:
+                if file and file.filename:
+                    image_data = await file.read()
+                    acta_images_data.append(image_data)
+            
+            # Subir a Google Drive y obtener nombres de archivos
+            if acta_images_data:
+                from image_upload_service import upload_acta_images
+                f_acta_filenames = upload_acta_images(acta_images_data, codigo_acta.strip())
+        
+        # Procesar múltiples imágenes de hoja de trabajo
+        f_h_trabajo_filenames = []
+        if f_h_trabajo:
+            hoja_images_data = []
+            for file in f_h_trabajo:
+                if file and file.filename:
+                    image_data = await file.read()
+                    hoja_images_data.append(image_data)
+            
+            # Subir a Google Drive y obtener nombres de archivos
+            if hoja_images_data:
+                from image_upload_service import upload_hoja_trabajo_images
+                f_h_trabajo_filenames = upload_hoja_trabajo_images(hoja_images_data, codigo_acta.strip())
+        
+        # Convertir listas a strings separados por coma para la BD
+        f_acta_str = ','.join(f_acta_filenames) if f_acta_filenames else None
+        f_h_trabajo_str = ','.join(f_h_trabajo_filenames) if f_h_trabajo_filenames else None
 
         max_retries = 2
         last_error = None
-        
+
         for attempt in range(max_retries):
             try:
                 with DatabaseConnection() as conn:
@@ -1112,11 +1190,11 @@ async def guardar_acta_municipal(
                             %s, %s, %s, %s
                         )
                     """
-                    
+
                     cursor.execute(acta_query, (
                         id_mesa, codigo_acta.strip(), 'MUNICIPAL',
                         observaciones or '', user_id, total_actas,
-                        f_acta_data, f_h_trabajo_data,
+                        f_acta_str, f_h_trabajo_str,  # Nombres de archivos (strings separados por coma)
                         # Municipal values
                         id_cargo_alcalde, id_cargo_concejal,
                         votos_blancos_alcalde, votos_nulos_alcalde,
@@ -1151,13 +1229,15 @@ async def guardar_acta_municipal(
 
                     conn.commit()
                     cursor.close()
-                    
+
                     return {
                         "message": "✅ Acta Municipal (Alcalde y Concejal) registrada exitosamente",
                         "id_acta": id_acta,
-                        "codigo_acta": codigo_acta.strip()
+                        "codigo_acta": codigo_acta.strip(),
+                        "f_acta": f_acta_str,
+                        "f_h_trabajo": f_h_trabajo_str
                     }
-                    
+
             except HTTPException:
                 raise
             except Exception as e:
@@ -1169,13 +1249,160 @@ async def guardar_acta_municipal(
                     continue
                 else:
                     break
-        
+
         error_msg = str(last_error) if last_error else "Error desconocido"
         print(f"❌ Error después de {max_retries} intentos: {error_msg}")
         raise HTTPException(status_code=500, detail=f"Error al guardar acta: {error_msg}")
-    
+
     except HTTPException as he:
         raise he
     except Exception as e:
-        print(f"❌ Error general en guardar_acta_municipal: {str(e)}")
+        print(f"❌ Error general en guardar_acta_municipal: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== NUEVO ENDPOINT: ESCRUTINIO GENERAL (Municipal + Gobernación) ==========
+@router.post("/escrutinio/general")
+async def guardar_escrutinio_general(
+    id_mesa: int = Form(...),
+    codigo_acta: str = Form(...),
+    total_actas: int = Form(...),
+    observaciones: Optional[str] = Form(None),
+    user_id: int = Form(...),
+    tipo_escrutinio: str = Form('AMBOS'),
+    id_cargo_alcalde: Optional[int] = Form(None),
+    id_cargo_concejal: Optional[int] = Form(None),
+    votos_blancos_alcalde: Optional[int] = Form(0),
+    votos_nulos_alcalde: Optional[int] = Form(0),
+    votos_blancos_concejal: Optional[int] = Form(0),
+    votos_nulos_concejal: Optional[int] = Form(0),
+    votos_alcalde: Optional[str] = Form(None),
+    votos_concejal: Optional[str] = Form(None),
+    id_cargo_gobernador: Optional[int] = Form(None),
+    id_cargo_gob: Optional[int] = Form(None),
+    id_cargo_asam_pob: Optional[int] = Form(None),
+    id_cargo_asam_terr: Optional[int] = Form(None),
+    votos_blancos_gobernador: Optional[int] = Form(0),
+    votos_nulos_gobernador: Optional[int] = Form(0),
+    votos_blancos_asam_pob: Optional[int] = Form(0),
+    votos_nulos_asam_pob: Optional[int] = Form(0),
+    votos_blancos_asam_terr: Optional[int] = Form(0),
+    votos_nulos_asam_terr: Optional[int] = Form(0),
+    votos_gobernador: Optional[str] = Form(None),
+    votos_asam_pob: Optional[str] = Form(None),
+    votos_asam_terr: Optional[str] = Form(None),
+    f_acta: List[UploadFile] = File(None),
+    f_h_trabajo: List[UploadFile] = File(None)
+):
+    """Guarda actas de Municipal Y/O Gobernación en un solo formulario"""
+    try:
+        import json
+
+        votos_alcalde_dict = json.loads(votos_alcalde) if votos_alcalde else {}
+        votos_concejal_dict = json.loads(votos_concejal) if votos_concejal else {}
+        votos_gobernador_dict = json.loads(votos_gobernador) if votos_gobernador else {}
+        votos_asam_pob_dict = json.loads(votos_asam_pob) if votos_asam_pob else {}
+        votos_asam_terr_dict = json.loads(votos_asam_terr) if votos_asam_terr else {}
+
+        # Procesar imágenes
+        f_acta_filenames = []
+        f_h_trabajo_filenames = []
+        
+        if f_acta:
+            acta_images_data = [await file.read() for file in f_acta if file and file.filename]
+            if acta_images_data:
+                from image_upload_service import upload_acta_images
+                f_acta_filenames = upload_acta_images(acta_images_data, codigo_acta.strip())
+        
+        if f_h_trabajo:
+            hoja_images_data = [await file.read() for file in f_h_trabajo if file and file.filename]
+            if hoja_images_data:
+                from image_upload_service import upload_hoja_trabajo_images
+                f_h_trabajo_filenames = upload_hoja_trabajo_images(hoja_images_data, codigo_acta.strip())
+        
+        f_acta_str = ','.join(f_acta_filenames) if f_acta_filenames else None
+        f_h_trabajo_str = ','.join(f_h_trabajo_filenames) if f_h_trabajo_filenames else None
+
+        max_retries = 2
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                with DatabaseConnection() as conn:
+                    if not conn:
+                        raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
+
+                    cursor = conn.cursor()
+
+                    # Validar código único
+                    cursor.execute("SELECT id_acta FROM actas WHERE codigo_acta = %s", (codigo_acta.strip(),))
+                    if cursor.fetchone():
+                        raise HTTPException(status_code=400, detail=f"Código '{codigo_acta.strip()}' ya registrado")
+
+                    tipo_papeleta = 'GENERAL' if tipo_escrutinio == 'AMBOS' else ('MUNICIPAL' if tipo_escrutinio == 'SOLO_MUNICIPAL' else 'SUBNACIONAL')
+
+                    cursor.execute("""
+                        INSERT INTO actas (
+                            id_mesa, codigo_acta, tipo_papeleta, observaciones, usuario_registro, total_actas,
+                            f_acta, f_h_trabajo,
+                            id_cargo_alca, id_cargo_cons, votos_blancos_a, votos_nulos_a,
+                            votos_blancos_c, votos_nulos_c,
+                            id_cargo_gob, id_cargo_asam_pob, id_cargo_asam_terr,
+                            votos_blancos_g, votos_nulos_g,
+                            votos_blancos_p, votos_nulos_p,
+                            votos_blancos_t, votos_nulos_t
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        id_mesa, codigo_acta.strip(), tipo_papeleta, observaciones or '', user_id, total_actas,
+                        f_acta_str, f_h_trabajo_str,
+                        id_cargo_alcalde, id_cargo_concejal, votos_blancos_alcalde, votos_nulos_alcalde,
+                        votos_blancos_concejal, votos_nulos_concejal,
+                        id_cargo_gob, id_cargo_asam_pob, id_cargo_asam_terr,
+                        votos_blancos_gobernador, votos_nulos_gobernador,
+                        votos_blancos_asam_pob, votos_nulos_asam_pob,
+                        votos_blancos_asam_terr, votos_nulos_asam_terr
+                    ))
+                    id_acta = cursor.lastrowid
+
+                    # Insertar votos MUNICIPALES
+                    if tipo_escrutinio in ['AMBOS', 'SOLO_MUNICIPAL']:
+                        for id_org, votos in votos_alcalde_dict.items():
+                            if votos > 0:
+                                cursor.execute("INSERT INTO votos_detalle (id_acta, id_organizacion, votos_cantidad, tipo_voto) VALUES (%s, %s, %s, 'ALCALDE')", (id_acta, int(id_org), int(votos)))
+                        for id_org, votos in votos_concejal_dict.items():
+                            if votos > 0:
+                                cursor.execute("INSERT INTO votos_detalle (id_acta, id_organizacion, votos_cantidad, tipo_voto) VALUES (%s, %s, %s, 'CONCEJAL')", (id_acta, int(id_org), int(votos)))
+
+                    # Insertar votos GOBERNACION
+                    if tipo_escrutinio in ['AMBOS', 'SOLO_GOBERNACION']:
+                        for id_org, votos in votos_gobernador_dict.items():
+                            if votos > 0:
+                                cursor.execute("INSERT INTO votos_detalle (id_acta, id_organizacion, votos_cantidad, tipo_voto) VALUES (%s, %s, %s, 'GOBERNADOR')", (id_acta, int(id_org), int(votos)))
+                        for id_org, votos in votos_asam_pob_dict.items():
+                            if votos > 0:
+                                cursor.execute("INSERT INTO votos_detalle (id_acta, id_organizacion, votos_cantidad, tipo_voto) VALUES (%s, %s, %s, 'ASAMBLEISTA_POBLACION')", (id_acta, int(id_org), int(votos)))
+                        for id_org, votos in votos_asam_terr_dict.items():
+                            if votos > 0:
+                                cursor.execute("INSERT INTO votos_detalle (id_acta, id_organizacion, votos_cantidad, tipo_voto) VALUES (%s, %s, %s, 'ASAMBLEISTA_TERRITORIO')", (id_acta, int(id_org), int(votos)))
+
+                    conn.commit()
+                    cursor.close()
+
+                    return {"message": "✅ Acta General registrada", "id_acta": id_acta, "tipo_escrutinio": tipo_escrutinio}
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                    continue
+                break
+
+        raise HTTPException(status_code=500, detail=str(last_error) if last_error else "Error al guardar")
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"❌ Error en guardar_escrutinio_general: {e}")
         raise HTTPException(status_code=500, detail=str(e))

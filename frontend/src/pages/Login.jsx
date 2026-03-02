@@ -12,11 +12,24 @@ export default function Login({ setIsAuthenticated }) {
     e.preventDefault();
     setError('');
     try {
+      // Limpiar TODOS los datos anteriores antes de iniciar sesión
+      localStorage.clear(); // Limpia todo el localStorage
+      
       const res = await api.post('/api/auth/login', formData);
+      
+      // Guardar nuevos datos de sesión
       localStorage.setItem('access_token', res.data.access_token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
+      
+      // Forzar recarga de la aplicación
       setIsAuthenticated(true);
-      navigate('/dashboard');
+      
+      // Pequeño delay para asegurar que los datos se guardaron
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+        window.location.reload(); // Recargar para limpiar caché del navegador
+      }, 100);
+      
     } catch (err) {
       console.error("Error login:", err.response || err);
       setError('❌ Usuario o contraseña incorrectos');
