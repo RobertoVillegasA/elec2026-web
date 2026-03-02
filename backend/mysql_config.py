@@ -11,9 +11,6 @@ Soluciones implementadas:
 """
 
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Configuración de variables de entorno
 DB_HOST = os.getenv('DB_HOST', 'localhost')

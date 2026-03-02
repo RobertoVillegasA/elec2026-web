@@ -2,9 +2,6 @@
 import mysql.connector
 from mysql.connector import Error
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 DB_CONFIG = {
     'host': os.getenv('DB_HOST'),

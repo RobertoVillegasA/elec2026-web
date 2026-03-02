@@ -22,16 +22,26 @@ app = FastAPI(title="Sistema Electoral Bolivia 2026")
 # CORS - Configurar según el entorno
 import os
 
+# Detectar si estamos en Render
+is_render = 'RENDER' in os.environ or os.getenv('PORT', '').isdigit()
+
 # Detectar si estamos en PythonAnywhere
 is_pythonanywhere = 'PYTHONANYWHERE' in os.environ or \
     os.getenv('DB_HOST', '').endswith('pythonanywhere-services.com')
 
-if is_pythonanywhere:
+if is_render:
+    # Producción en Render
+    allowed_origins = [
+        "https://sistema-electoral-backend.onrender.com",
+        "http://localhost:5173",
+        "http://localhost:8000",
+    ]
+elif is_pythonanywhere:
     # Producción en PythonAnywhere
     allowed_origins = [
-        "https://tu_usuario.pythonanywhere.com",  # Cambiar por tu subdominio real
-        "http://localhost:5173",  # Desarrollo local
-        "http://localhost:8000",  # Desarrollo local
+        "https://tu_usuario.pythonanywhere.com",
+        "http://localhost:5173",
+        "http://localhost:8000",
     ]
 else:
     # Desarrollo local
