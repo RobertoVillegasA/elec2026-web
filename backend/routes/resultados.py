@@ -5,9 +5,13 @@ Rutas para visualización de resultados electorales con filtros geográficos
 
 from fastapi import APIRouter, Query
 from db import DatabaseConnection
+import os
 
 router = APIRouter(tags=["resultados"])
 dashboard_router = APIRouter(tags=["dashboard"])
+
+# Debug flag
+DEBUG_MODE = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
 
 
 @dashboard_router.get("/resultados")
@@ -256,8 +260,12 @@ async def obtener_resultados_completos(
     }
     """
     try:
+        # Logging para debug
+        print(f"📊 Resultados completos - dept:{departamento}, prov:{provincia}, muni:{municipio}, reci:{recinto}")
+        
         with DatabaseConnection() as conn:
             if not conn:
+                print("❌ No se pudo conectar a la base de datos")
                 return {
                     "error": "No se pudo conectar a la base de datos",
                     "gobernador": {"candidatos": [], "resumen": {"total_votos": 0, "votos_libre": 0, "votos_creemos": 0, "votos_cc": 0, "votos_blancos": 0, "votos_nulos": 0, "total_actas": 0, "total_inscritos": 0}},

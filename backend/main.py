@@ -82,3 +82,21 @@ def health_check():
 @app.get("/")
 def root():
     return {"message": "Sistema Electoral Bolivia 2026 API", "docs": "/docs"}
+
+# Endpoint para debug de DB
+@app.get("/api/debug/db")
+def debug_db():
+    """Verifica conexión a la base de datos"""
+    try:
+        from database import get_db
+        conn = get_db()
+        if conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT 1 as test")
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return {"status": "connected", "test": result}
+        return {"status": "connection_failed"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
