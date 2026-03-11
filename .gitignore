@@ -64,3 +64,4 @@ backend/google_credentials.json
 backend/google_oauth_credentials.json
 backend/google_token.json
 backend/token.pickle
+*.json.secret
