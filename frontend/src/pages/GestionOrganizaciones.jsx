@@ -282,6 +282,17 @@ export default function GestionOrganizaciones() {
             </div>
           )}
         </div>
+
+        {/* Botón Volver al Dashboard */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 font-medium transition-all duration-300 shadow-lg hover:shadow-blue-500/30 flex items-center gap-2 mx-auto"
+          >
+            <span>↩️</span>
+            <span>Volver al Dashboard</span>
+          </button>
+        </div>
       </div>
     </div>
   );

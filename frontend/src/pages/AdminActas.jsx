@@ -405,8 +405,8 @@ export default function AdminActas() {
                             <option value="MUNICIPAL">Municipal</option>
                           </select>
                         </td>
-                        {/* Show gubernatorial inputs for SUBNACIONAL, NACIONAL, or GENERAL actas */}
-                        {(editForm.tipo_papeleta === 'SUBNACIONAL' || editForm.tipo_papeleta === 'NACIONAL' || editForm.tipo_papeleta === 'GENERAL') ? (
+                        {/* Show gubernatorial inputs for SUBNACIONAL actas */}
+                        {editForm.tipo_papeleta === 'SUBNACIONAL' ? (
                           <>
                             <td className="py-3 px-4">
                               <input
@@ -432,8 +432,8 @@ export default function AdminActas() {
                           </>
                         )}
 
-                        {/* Show municipal inputs for MUNICIPAL or GENERAL actas */}
-                        {(editForm.tipo_papeleta === 'MUNICIPAL' || editForm.tipo_papeleta === 'GENERAL') ? (
+                        {/* Show municipal inputs for MUNICIPAL or SUBNACIONAL actas */}
+                        {(editForm.tipo_papeleta === 'MUNICIPAL' || editForm.tipo_papeleta === 'SUBNACIONAL') ? (
                           <>
                             <td className="py-3 px-4">
                               <input
@@ -527,25 +527,37 @@ export default function AdminActas() {
                               {votosEditables.length > 0 ? (
                                 votosEditables.map((voto, index) => (
                                   <div key={index} className="bg-gray-50 p-3 rounded border border-gray-200">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <div className="flex-1">
-                                        <p className="font-medium text-gray-800 text-sm">{voto.nombre || 'N/A'}</p>
-                                        <p className="text-xs text-gray-600">{voto.sigla || 'N/A'}</p>
-                                        <p className="text-xs text-gray-500">{voto.tipo_voto || ''}</p>
-                                      </div>
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        value={voto.votos_cantidad || 0}
-                                        onChange={(e) => {
-                                          const newVotos = [...votosEditables];
-                                          newVotos[index].votos_cantidad = parseInt(e.target.value) || 0;
-                                          setVotosEditables(newVotos);
-                                        }}
-                                        className="w-20 p-2 border border-gray-300 rounded text-center font-bold text-blue-600"
-                                        placeholder="0"
-                                      />
+                                    <div className="mb-2">
+                                      <span className={`inline-block px-2 py-1 rounded text-xs font-bold mb-1 ${
+                                        voto.tipo_voto === 'GOBERNADOR' ? 'bg-blue-100 text-blue-700' :
+                                        voto.tipo_voto === 'ALCALDE' ? 'bg-green-100 text-green-700' :
+                                        voto.tipo_voto === 'CONCEJAL' ? 'bg-green-100 text-green-700' :
+                                        voto.tipo_voto === 'ASAMBLEISTA_POBLACION' ? 'bg-purple-100 text-purple-700' :
+                                        voto.tipo_voto === 'ASAMBLEISTA_TERRITORIO' ? 'bg-blue-100 text-blue-700' :
+                                        'bg-gray-100 text-gray-700'
+                                      }`}>
+                                        {voto.tipo_voto === 'GOBERNADOR' ? 'GOBERNADOR' :
+                                         voto.tipo_voto === 'ALCALDE' ? 'ALCALDE' :
+                                         voto.tipo_voto === 'CONCEJAL' ? 'CONCEJAL' :
+                                         voto.tipo_voto === 'ASAMBLEISTA_POBLACION' ? 'ASAM. POBLACIÓN' :
+                                         voto.tipo_voto === 'ASAMBLEISTA_TERRITORIO' ? 'ASAM. TERRITORIO' :
+                                         voto.tipo_voto || 'N/A'}
+                                      </span>
+                                      <p className="font-medium text-gray-800 text-sm">{voto.nombre || 'N/A'}</p>
+                                      <p className="text-xs text-gray-600">{voto.sigla || 'N/A'}</p>
                                     </div>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={voto.votos_cantidad || 0}
+                                      onChange={(e) => {
+                                        const newVotos = [...votosEditables];
+                                        newVotos[index].votos_cantidad = parseInt(e.target.value) || 0;
+                                        setVotosEditables(newVotos);
+                                      }}
+                                      className="w-full p-2 border border-gray-300 rounded text-center font-bold text-blue-600"
+                                      placeholder="0"
+                                    />
                                   </div>
                                 ))
                               ) : (
@@ -576,8 +588,8 @@ export default function AdminActas() {
                               {acta.tipo_papeleta}
                             </span>
                           </td>
-                          {/* Show gubernatorial data for SUBNACIONAL, NACIONAL, or GENERAL actas */}
-                          {(acta.tipo_papeleta === 'SUBNACIONAL' || acta.tipo_papeleta === 'NACIONAL' || acta.tipo_papeleta === 'GENERAL') ? (
+                          {/* Show gubernatorial data for SUBNACIONAL actas */}
+                          {acta.tipo_papeleta === 'SUBNACIONAL' ? (
                             <>
                               <td className="py-3 px-4">{acta.votos_blancos_g || 0}</td>
                               <td className="py-3 px-4">{acta.votos_nulos_g || 0}</td>
@@ -589,8 +601,8 @@ export default function AdminActas() {
                             </>
                           )}
 
-                          {/* Show municipal data for MUNICIPAL or GENERAL actas */}
-                          {(acta.tipo_papeleta === 'MUNICIPAL' || acta.tipo_papeleta === 'GENERAL') ? (
+                          {/* Show municipal data for MUNICIPAL or SUBNACIONAL actas */}
+                          {(acta.tipo_papeleta === 'MUNICIPAL' || acta.tipo_papeleta === 'SUBNACIONAL') ? (
                             <>
                               <td className="py-3 px-4">{acta.votos_blancos_a || 0}</td>
                               <td className="py-3 px-4">{acta.votos_nulos_a || 0}</td>
@@ -665,8 +677,8 @@ export default function AdminActas() {
                                     </div>
                                   </div>
 
-                                  {/* Gubernatorial positions (show only for SUBNACIONAL, NACIONAL, or GENERAL actas) */}
-                                  {(acta.tipo_papeleta === 'SUBNACIONAL' || acta.tipo_papeleta === 'NACIONAL' || acta.tipo_papeleta === 'GENERAL') && (
+                                  {/* Gubernatorial positions (show only for SUBNACIONAL actas) */}
+                                  {acta.tipo_papeleta === 'SUBNACIONAL' && (
                                     <>
                                       <div className="bg-blue-50 p-3 rounded border border-blue-200">
                                         <h5 className="font-semibold text-blue-700 mb-2">🏛️ Gobernador</h5>
@@ -712,8 +724,8 @@ export default function AdminActas() {
                                     </>
                                   )}
 
-                                  {/* Municipal positions (show only for MUNICIPAL or GENERAL actas) */}
-                                  {(acta.tipo_papeleta === 'MUNICIPAL' || acta.tipo_papeleta === 'GENERAL') && (
+                                  {/* Municipal positions (show only for MUNICIPAL or SUBNACIONAL actas) */}
+                                  {(acta.tipo_papeleta === 'MUNICIPAL' || acta.tipo_papeleta === 'SUBNACIONAL') && (
                                     <>
                                       <div className="bg-green-50 p-3 rounded border border-green-200">
                                         <h5 className="font-semibold text-green-700 mb-2">🏘️ Alcalde</h5>
@@ -746,7 +758,7 @@ export default function AdminActas() {
                                   )}
 
                                   {/* Show message if no relevant data for this acta type */}
-                                  {acta.tipo_papeleta !== 'SUBNACIONAL' && acta.tipo_papeleta !== 'NACIONAL' && acta.tipo_papeleta !== 'MUNICIPAL' && acta.tipo_papeleta !== 'GENERAL' && (
+                                  {acta.tipo_papeleta !== 'SUBNACIONAL' && acta.tipo_papeleta !== 'NACIONAL' && acta.tipo_papeleta !== 'MUNICIPAL' && (
                                     <div className="col-span-full bg-yellow-50 p-4 rounded border border-yellow-200 text-center">
                                       <p className="text-yellow-700">No se encontraron datos específicos para este tipo de acta: {acta.tipo_papeleta}</p>
                                     </div>
@@ -949,6 +961,9 @@ export default function AdminActas() {
                         .filter(v => v.tipo_voto === 'GOBERNADOR')
                         .map((voto, index) => (
                           <div key={index} className="bg-blue-50 p-3 rounded border border-blue-200">
+                            <div className="mb-1">
+                              <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">GOBERNADOR</span>
+                            </div>
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="font-medium text-blue-800">{voto.nombre || 'N/A'}</p>
@@ -966,13 +981,16 @@ export default function AdminActas() {
 
                 {/* Votos para Asambleista por Territorio */}
                 <div className="mb-4">
-                  <h4 className="font-semibold text-green-700 mb-2">🗺️ Asambleista por Territorio</h4>
+                  <h4 className="font-semibold text-green-700 mb-2">🗺️ Asambleísta por Territorio</h4>
                   {votosDetalle && votosDetalle.filter(v => v.tipo_voto === 'ASAMBLEISTA_TERRITORIO').length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {votosDetalle
                         .filter(v => v.tipo_voto === 'ASAMBLEISTA_TERRITORIO')
                         .map((voto, index) => (
                           <div key={index} className="bg-green-50 p-3 rounded border border-green-200">
+                            <div className="mb-1">
+                              <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">ASAM. TERRITORIO</span>
+                            </div>
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="font-medium text-green-800">{voto.nombre || 'N/A'}</p>
@@ -984,19 +1002,22 @@ export default function AdminActas() {
                         ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 italic text-sm">No hay votos registrados para Asambleista por Territorio</p>
+                    <p className="text-gray-500 italic text-sm">No hay votos registrados para Asambleísta por Territorio</p>
                   )}
                 </div>
 
                 {/* Votos para Asambleista por Población */}
                 <div className="mb-4">
-                  <h4 className="font-semibold text-purple-700 mb-2">👥 Asambleista por Población</h4>
+                  <h4 className="font-semibold text-purple-700 mb-2">👥 Asambleísta por Población</h4>
                   {votosDetalle && votosDetalle.filter(v => v.tipo_voto === 'ASAMBLEISTA_POBLACION').length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {votosDetalle
                         .filter(v => v.tipo_voto === 'ASAMBLEISTA_POBLACION')
                         .map((voto, index) => (
                           <div key={index} className="bg-purple-50 p-3 rounded border border-purple-200">
+                            <div className="mb-1">
+                              <span className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold">ASAM. POBLACIÓN</span>
+                            </div>
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="font-medium text-purple-800">{voto.nombre || 'N/A'}</p>
@@ -1008,7 +1029,7 @@ export default function AdminActas() {
                         ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 italic text-sm">No hay votos registrados para Asambleista por Población</p>
+                    <p className="text-gray-500 italic text-sm">No hay votos registrados para Asambleísta por Población</p>
                   )}
                 </div>
 
@@ -1021,6 +1042,9 @@ export default function AdminActas() {
                         .filter(v => v.tipo_voto === 'ALCALDE')
                         .map((voto, index) => (
                           <div key={index} className="bg-red-50 p-3 rounded border border-red-200">
+                            <div className="mb-1">
+                              <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">ALCALDE</span>
+                            </div>
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="font-medium text-red-800">{voto.nombre || 'N/A'}</p>
@@ -1045,6 +1069,9 @@ export default function AdminActas() {
                         .filter(v => v.tipo_voto === 'CONCEJAL')
                         .map((voto, index) => (
                           <div key={index} className="bg-yellow-50 p-3 rounded border border-yellow-200">
+                            <div className="mb-1">
+                              <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-bold">CONCEJAL</span>
+                            </div>
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="font-medium text-yellow-800">{voto.nombre || 'N/A'}</p>

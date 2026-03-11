@@ -1339,7 +1339,9 @@ async def guardar_escrutinio_general(
                     if cursor.fetchone():
                         raise HTTPException(status_code=400, detail=f"Código '{codigo_acta.strip()}' ya registrado")
 
-                    tipo_papeleta = 'GENERAL' if tipo_escrutinio == 'AMBOS' else ('MUNICIPAL' if tipo_escrutinio == 'SOLO_MUNICIPAL' else 'SUBNACIONAL')
+                    # TIPO DE PAPELETA: Siempre SUBNACIONAL para actas que incluyen Gobernación
+                    # MUNICIPAL solo para actas exclusivamente de alcalde/concejal
+                    tipo_papeleta = 'MUNICIPAL' if tipo_escrutinio == 'SOLO_MUNICIPAL' else 'SUBNACIONAL'
 
                     cursor.execute("""
                         INSERT INTO actas (
@@ -1364,7 +1366,7 @@ async def guardar_escrutinio_general(
                     ))
                     id_acta = cursor.lastrowid
 
-                    # Insertar votos MUNICIPALES
+                    # Insertar votos MUNICIPALES (si corresponde)
                     if tipo_escrutinio in ['AMBOS', 'SOLO_MUNICIPAL']:
                         for id_org, votos in votos_alcalde_dict.items():
                             if votos > 0:
@@ -1373,7 +1375,7 @@ async def guardar_escrutinio_general(
                             if votos > 0:
                                 cursor.execute("INSERT INTO votos_detalle (id_acta, id_organizacion, votos_cantidad, tipo_voto) VALUES (%s, %s, %s, 'CONCEJAL')", (id_acta, int(id_org), int(votos)))
 
-                    # Insertar votos GOBERNACION
+                    # Insertar votos GOBERNACION (si corresponde)
                     if tipo_escrutinio in ['AMBOS', 'SOLO_GOBERNACION']:
                         for id_org, votos in votos_gobernador_dict.items():
                             if votos > 0:

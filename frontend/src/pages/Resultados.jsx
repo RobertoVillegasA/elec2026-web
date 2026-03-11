@@ -120,20 +120,36 @@ export default function Resultados() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [tipoGrafico, setTipoGrafico] = useState('torta'); // 'torta' o 'barras'
+  const [showCalculoAsamblea, setShowCalculoAsamblea] = useState(false); // Modal para cálculo de asamblea
+  const [calculoResultados, setCalculoResultados] = useState(null); // Resultados del cálculo
+  const [organizaciones, setOrganizaciones] = useState([]); // Lista de organizaciones políticas
 
   // Cargar departamentos al iniciar
   useEffect(() => {
-    const cargarGeografia = async () => {
+    const cargarDatosIniciales = async () => {
       try {
-        console.log('Cargando departamentos...');
-        const res = await api.get('/api/catalog?table=departamentos');
-        console.log('Respuesta de departamentos:', res.data);
+        console.log('Cargando departamentos y organizaciones...');
+        const [deptRes, orgRes] = await Promise.all([
+          api.get('/api/catalog?table=departamentos'),
+          api.get('/api/catalog?table=organizaciones_politicas')
+        ]);
 
-        // El catalog devuelve {nombre: id}, igual que las funciones de geografia
-        const deptData = res.data || {};
-        console.log('Datos originales de departamentos:', deptData);
-        
+        console.log('Respuesta de departamentos:', deptRes.data);
+        console.log('Respuesta de organizaciones:', orgRes.data);
+
+        const deptData = deptRes.data || {};
+        const orgData = orgRes.data || {};
+
         setDepartamentos(deptData);
+
+        // Convertir organizaciones a array
+        const orgArray = Object.entries(orgData).map(([sigla, id]) => ({
+          id_organizacion: id,
+          sigla,
+          nombre: sigla // Usamos sigla como nombre por defecto
+        }));
+        setOrganizaciones(orgArray);
+
         // Limpiar resultados al inicio
         setResultados([]);
         setResumen({
@@ -227,7 +243,7 @@ export default function Resultados() {
         setLoading(false);
       }
     };
-    cargarGeografia();
+    cargarDatosIniciales();
   }, []);
 
   // Cargar provincias cuando cambia departamento
@@ -799,6 +815,23 @@ export default function Resultados() {
     return () => clearTimeout(timer);
   }, [selectedDepartamento, selectedProvincia, selectedMunicipio, selectedRecinto]);
 
+  // Actualización automática cada 30 segundos según el filtro aplicado
+  useEffect(() => {
+    // No actualizar si no hay filtro seleccionado
+    if (!selectedDepartamento && !selectedProvincia && !selectedMunicipio && !selectedRecinto) {
+      return;
+    }
+
+    // Intervalo para actualizar resultados automáticamente
+    const intervalId = setInterval(() => {
+      console.log('🔄 Actualización automática de resultados...');
+      cargarResultados();
+    }, 30000); // 30 segundos
+
+    // Limpiar intervalo al desmontar o cuando cambie el filtro
+    return () => clearInterval(intervalId);
+  }, [selectedDepartamento, selectedProvincia, selectedMunicipio, selectedRecinto]);
+
   // Preparar datos para gráficos
   const porcentaje = (valor, total) => total > 0 ? ((valor / total) * 100).toFixed(1) : 0;
 
@@ -873,6 +906,104 @@ export default function Resultados() {
         borderColor: '#fff'
       }]
     };
+  };
+
+  // Función para calcular distribución de Asambleístas por Población
+  const calcularAsambleistasPoblacion = () => {
+    // Número de asambleístas por población a elegir
+    const NUM_ASAMBLEISTAS = 5;
+
+    // Obtener votos de cada organización desde el resumen
+    // El backend devuelve votos_libre, votos_creemos, votos_cc, etc.
+    // Pero ahora usaremos TODAS las organizaciones registradas
+
+    // Mapear votos por organización
+    const votosPorOrg = organizaciones.map(org => {
+      const key = `votos_${org.sigla.toLowerCase()}`;
+      return {
+        id: org.id_organizacion,
+        sigla: org.sigla,
+        votos: resumen.asambleistas_poblacion[key] || 0
+      };
+    });
+
+    // Calcular votos válidos (excluyendo blancos y nulos)
+    const votosValidos = votosPorOrg.reduce((sum, org) => sum + org.votos, 0);
+    const votosBlancos = resumen.asambleistas_poblacion.votos_blancos || 0;
+    const votosNulos = resumen.asambleistas_poblacion.votos_nulos || 0;
+    const totalVotos = votosValidos + votosBlancos + votosNulos;
+
+    // Verificar si hay votos válidos
+    if (votosValidos === 0) {
+      setCalculoResultados({
+        error: 'No hay votos válidos para calcular. Los votos registrados son solo blancos y nulos.',
+        cociente: 0,
+        escaños: []
+      });
+      setShowCalculoAsamblea(true);
+      return;
+    }
+
+    // Calcular cociente electoral (votos válidos / número de escaños)
+    const cocienteElectoral = Math.floor(votosValidos / NUM_ASAMBLEISTAS);
+
+    // Evitar división por cero
+    if (cocienteElectoral === 0) {
+      setCalculoResultados({
+        error: 'El cociente electoral es cero. No hay suficientes votos para calcular la distribución.',
+        cociente: 0,
+        escaños: []
+      });
+      setShowCalculoAsamblea(true);
+      return;
+    }
+
+    // Calcular escaños por cociente para cada organización
+    votosPorOrg.forEach(org => {
+      org.escañosCociente = Math.floor(org.votos / cocienteElectoral);
+      org.residuo = org.votos % cocienteElectoral;
+    });
+
+    // Calcular escaños restantes por residuo
+    const escañosAsignados = votosPorOrg.reduce((sum, org) => sum + org.escañosCociente, 0);
+    let escañosRestantes = NUM_ASAMBLEISTAS - escañosAsignados;
+
+    // Ordenar organizaciones por residuo mayor a menor (solo las con residuo > 0)
+    const organizacionesPorResiduo = votosPorOrg
+      .filter(org => org.residuo > 0)
+      .sort((a, b) => b.residuo - a.residuo);
+
+    // Inicializar escaños por residuo
+    votosPorOrg.forEach(org => {
+      org.escañosResiduo = 0;
+    });
+
+    // Distribuir escaños restantes por residuo
+    for (const org of organizacionesPorResiduo) {
+      if (escañosRestantes <= 0) break;
+      org.escañosResiduo += 1;
+      escañosRestantes -= 1;
+    }
+
+    // Calcular total de escaños y porcentajes
+    votosPorOrg.forEach(org => {
+      org.escañosTotales = org.escañosCociente + org.escañosResiduo;
+      org.porcentaje = totalVotos > 0 ? ((org.votos / totalVotos) * 100).toFixed(2) : 0;
+    });
+
+    // Ordenar por votos (mayor a menor)
+    votosPorOrg.sort((a, b) => b.votos - a.votos);
+
+    setCalculoResultados({
+      error: null,
+      cociente: cocienteElectoral,
+      votosValidos,
+      totalVotos,
+      numAsambleistas: NUM_ASAMBLEISTAS,
+      escaños: votosPorOrg
+    });
+
+    setShowCalculoAsamblea(true);
   };
 
   const chartOptions = {
@@ -1132,7 +1263,16 @@ export default function Resultados() {
 
             {/* Asambleístas por Población */}
             <div className="mb-6">
-              <h3 className="text-md font-semibold mb-3 text-purple-700">Asambleístas por Población</h3>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-md font-semibold text-purple-700">Asambleístas por Población</h3>
+                <button
+                  onClick={calcularAsambleistasPoblacion}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm transition flex items-center gap-2"
+                  title="Calcular distribución de escaños por método de cociente electoral"
+                >
+                  🧮 Calcular Escaños
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                 <div className="bg-blue-50 p-3 rounded-lg text-center">
                   <p className="text-xs text-gray-600">Actas</p>
@@ -1476,6 +1616,127 @@ export default function Resultados() {
           {(resumen.gobernador.total_actas === 0 && resumen.alcalde.total_actas === 0 && resumen.concejal.total_actas === 0) && !loading && (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-6 py-8 rounded-lg text-center">
               <p>No hay resultados disponibles. Seleccione un área geográfica para ver los datos.</p>
+            </div>
+          )}
+
+          {/* Modal para Cálculo de Asambleístas por Población */}
+          {showCalculoAsamblea && calculoResultados && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white rounded-t-2xl z-10">
+                  <h2 className="text-2xl font-bold text-purple-700 flex items-center gap-2">
+                    🧮 Cálculo de Asambleístas por Población
+                  </h2>
+                  <button
+                    onClick={() => setShowCalculoAsamblea(false)}
+                    className="text-gray-500 hover:text-gray-700 text-2xl font-bold px-3 py-1 rounded-lg hover:bg-gray-100 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  {calculoResultados.error ? (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+                      <p className="font-semibold">⚠️ Error</p>
+                      <p>{calculoResultados.error}</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Resumen del Cálculo */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <p className="text-sm text-gray-600">Total Votos</p>
+                          <p className="text-2xl font-bold text-blue-700">{calculoResultados.totalVotos || 0}</p>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                          <p className="text-sm text-gray-600">Votos Válidos</p>
+                          <p className="text-2xl font-bold text-green-700">{calculoResultados.votosValidos || 0}</p>
+                        </div>
+                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                          <p className="text-sm text-gray-600">Cociente Electoral</p>
+                          <p className="text-2xl font-bold text-purple-700">{calculoResultados.cociente || 0}</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-6">
+                        <p className="text-sm text-purple-700 font-semibold mb-1">📋 Fórmula Aplicada</p>
+                        <p className="text-xs text-purple-600">
+                          Método de cociente electoral: <span className="font-mono bg-white px-2 py-1 rounded">Votos Válidos / {calculoResultados.numAsambleistas} escaños</span>
+                          <br />
+                          Distribución por cociente + residuos (mayor residuo gana escaño adicional)
+                        </p>
+                      </div>
+
+                      {/* Tabla de Resultados */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-purple-100 border-b-2 border-purple-300">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-bold text-purple-800">Partido</th>
+                              <th className="px-4 py-3 text-center font-bold text-purple-800">Votos</th>
+                              <th className="px-4 py-3 text-center font-bold text-purple-800">%</th>
+                              <th className="px-4 py-3 text-center font-bold text-purple-800">Residuo</th>
+                              <th className="px-4 py-3 text-center font-bold text-purple-800">Escaños Cociente</th>
+                              <th className="px-4 py-3 text-center font-bold text-purple-800">Escaños Residuo</th>
+                              <th className="px-4 py-3 text-center font-bold text-purple-800 bg-purple-200">Total Escaños</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {calculoResultados.escaños.map((item, index) => (
+                              <tr key={index} className="border-b hover:bg-purple-50 transition">
+                                <td className="px-4 py-3 font-semibold text-gray-800">{item.partido}</td>
+                                <td className="px-4 py-3 text-center text-gray-700">{item.votos}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium">
+                                    {item.porcentaje}%
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-center text-gray-700">{item.residuo}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-sm font-medium">
+                                    {item.escañosCociente}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-sm font-medium">
+                                    {item.escañosResiduo}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-center font-bold text-lg bg-purple-100">
+                                  <span className="px-3 py-1 bg-purple-600 text-white rounded-full">
+                                    {item.escañosTotales}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Explicación */}
+                      <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h4 className="font-semibold text-gray-700 mb-2">📖 Explicación del Método:</h4>
+                        <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                          <li>Se calculan los <strong>votos válidos</strong> (excluyendo votos blancos y nulos).</li>
+                          <li>Se divide los votos válidos entre el número de escaños ({calculoResultados.numAsambleistas}) para obtener el <strong>cociente electoral</strong>.</li>
+                          <li>Cada partido recibe escaños según cuántas veces su voto alcanza el cociente.</li>
+                          <li>Los escaños restantes se distribuyen por <strong>residuo</strong> (votos sobrantes), de mayor a menor.</li>
+                        </ol>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex justify-end">
+                  <button
+                    onClick={() => setShowCalculoAsamblea(false)}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </>

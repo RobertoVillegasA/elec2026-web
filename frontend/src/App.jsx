@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DashboardCoord from './pages/DashboardCoord';
 import DashboardDelegado from './pages/DashboardDelegado';
+import DashboardGestion from './pages/DashboardGestion';
 import Escrutinio from './pages/Escrutinio';
 import EscrutinioGobernacion from './pages/EscrutinioGobernacion';
 import EscrutinioMunicipal from './pages/EscrutinioMunicipal';
@@ -19,6 +20,7 @@ import GestionUsuarios from './pages/GestionUsuarios';
 import GestionOrganizaciones from './pages/GestionOrganizaciones';
 import GestionCordDistrito from './pages/GestionCordDistrito';
 import GestionCordRecinto from './pages/GestionCordRecinto';
+import GestionRoles from './pages/GestionRoles';
 import MapaGeografico from './pages/MapaGeografico';
 
 // Función para decodificar el token JWT y verificar si ha expirado
@@ -189,8 +191,16 @@ function App() {
 		  element={isAuthenticated ? <GestionCordRecinto /> : <Navigate to="/login" />}
         />
 		<Route
+		  path="/gestion-roles"
+		  element={isAuthenticated ? <GestionRoles /> : <Navigate to="/login" />}
+        />
+		<Route
 		  path="/mapa-geografico"
 		  element={isAuthenticated ? <MapaGeografico /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/dashboard-gestion"
+          element={isAuthenticated ? <DashboardGestion /> : <Navigate to="/login" />}
         />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>

@@ -1,11 +1,12 @@
 # backend/routes/dashboard.py
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from db import (
     get_resumen_dashboard,
     get_resultados_globales,
     get_resultados_departamental,
     get_resultados_municipal,
-    get_actas_subnacionales
+    get_actas_subnacionales,
+    get_resumen_gestion_recintos
 )
 
 router = APIRouter()
@@ -14,6 +15,19 @@ router = APIRouter()
 def resumen_dashboard():
     """Obtiene métricas generales del sistema."""
     return get_resumen_dashboard()
+
+@router.get("/gestion-recintos")
+def gestion_recintos_dashboard(
+    id_departamento: int = Query(None, description="Filtrar por departamento"),
+    id_provincia: int = Query(None, description="Filtrar por provincia"),
+    id_municipio: int = Query(None, description="Filtrar por municipio")
+):
+    """Obtiene resumen completo de gestión de recintos, coordinadores, mesas y delegados con filtros geográficos."""
+    return get_resumen_gestion_recintos(
+        id_departamento=id_departamento,
+        id_provincia=id_provincia,
+        id_municipio=id_municipio
+    )
 
 @router.get("/resultados/globales")
 def resultados_globales():

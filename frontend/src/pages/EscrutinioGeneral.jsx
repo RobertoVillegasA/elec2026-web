@@ -669,6 +669,17 @@ export default function EscrutinioGeneral() {
 
         {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 border border-red-200">{error}</div>}
 
+        {/* Información importante */}
+        <div className="mb-6 bg-emerald-50 p-4 rounded-lg border-2 border-emerald-300">
+          <h3 className="font-bold text-emerald-800 mb-2">📌 Información Importante</h3>
+          <ul className="text-sm text-emerald-700 space-y-1">
+            <li>• Todas las actas se guardan como <span className="font-bold">UNA SOLA ACTA</span> con tipo <span className="font-bold bg-emerald-100 px-2 py-0.5 rounded">SUBNACIONAL</span></li>
+            <li>• Los votos de <span className="font-semibold">Alcalde y Concejal</span> se almacenan junto con los de <span className="font-semibold">Gobernador y Asambleístas</span></li>
+            <li>• Los resultados municipales muestran los votos de Alcalde/Concejal de actas MUNICIPALES y SUBNACIONALES</li>
+            <li>• Los resultados subnacionales muestran los votos de Gobernador/Asambleístas de actas SUBNACIONALES</li>
+          </ul>
+        </div>
+
         {/* Selector de Tipo de Escrutinio */}
         <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
           <label className="block text-gray-700 font-semibold mb-2">📋 Tipo de Escrutinio</label>
@@ -809,7 +820,10 @@ export default function EscrutinioGeneral() {
           {(tipoEscrutinio === 'AMBOS' || tipoEscrutinio === 'SOLO_MUNICIPAL') && (
             <div className="mb-6 border-2 border-orange-400 rounded-lg p-4 bg-orange-50">
               <h2 className="text-xl font-bold text-orange-800 mb-4">🏘️ VOTACIÓN MUNICIPAL</h2>
-              
+              <p className="text-sm text-orange-700 mb-4">
+                <span className="font-semibold">Nota:</span> Los votos de Alcalde y Concejal se guardarán en una sola acta con tipo <span className="font-bold bg-orange-100 px-2 py-1 rounded">SUBNACIONAL</span>
+              </p>
+
               {/* Alcalde */}
               <div className="mb-4 p-3 bg-white rounded border border-orange-200">
                 <h3 className="font-semibold text-orange-700 mb-2">👤 Alcalde</h3>
@@ -831,18 +845,23 @@ export default function EscrutinioGeneral() {
 
                 {Object.keys(organizaciones).length > 0 && (
                   <div className="mb-2">
-                    <h4 className="font-bold text-gray-800 mb-2 text-xs">Votos por Organización</h4>
+                    <h4 className="font-bold text-gray-800 mb-2 text-xs">📋 Votos por Organización - ALCALDE</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                       {Object.entries(organizaciones).map(([nombre, id]) => (
-                        <div key={id} className="flex items-center justify-between bg-orange-50 p-2 rounded border border-orange-200 text-sm">
-                          <span className="font-medium text-gray-700 text-xs">{nombre}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={actaMunicipal.votosAlcalde[id] || 0}
-                            onChange={(e) => handleVotoAlcaldeChange(id, e.target.value)}
-                            className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
-                          />
+                        <div key={id} className="flex flex-col bg-orange-50 p-2 rounded border border-orange-200 text-sm">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-orange-700 text-xs">ALCALDE</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-gray-700 text-xs">{nombre}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={actaMunicipal.votosAlcalde[id] || 0}
+                              onChange={(e) => handleVotoAlcaldeChange(id, e.target.value)}
+                              className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -885,7 +904,7 @@ export default function EscrutinioGeneral() {
 
               {/* Concejal */}
               <div className="p-3 bg-white rounded border border-green-200">
-                <h3 className="font-semibold text-green-700 mb-2">🏛️ Concejal</h3>
+                <h3 className="font-semibold text-green-700 mb-2">🏘️ Concejal</h3>
                 <div className="mb-2">
                   <label className="block text-gray-700 font-medium mb-1 text-sm">Cargo *</label>
                   <select
@@ -904,18 +923,23 @@ export default function EscrutinioGeneral() {
 
                 {Object.keys(organizaciones).length > 0 && (
                   <div className="mb-2">
-                    <h4 className="font-bold text-gray-800 mb-2 text-xs">Votos por Organización</h4>
+                    <h4 className="font-bold text-gray-800 mb-2 text-xs">📋 Votos por Organización - CONCEJAL</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                       {Object.entries(organizaciones).map(([nombre, id]) => (
-                        <div key={id} className="flex items-center justify-between bg-green-50 p-2 rounded border border-green-200 text-sm">
-                          <span className="font-medium text-gray-700 text-xs">{nombre}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={actaMunicipal.votosConcejal[id] || 0}
-                            onChange={(e) => handleVotoConcejalChange(id, e.target.value)}
-                            className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
-                          />
+                        <div key={id} className="flex flex-col bg-green-50 p-2 rounded border border-green-200 text-sm">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-green-700 text-xs">CONCEJAL</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-gray-700 text-xs">{nombre}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={actaMunicipal.votosConcejal[id] || 0}
+                              onChange={(e) => handleVotoConcejalChange(id, e.target.value)}
+                              className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -962,7 +986,10 @@ export default function EscrutinioGeneral() {
           {(tipoEscrutinio === 'AMBOS' || tipoEscrutinio === 'SOLO_GOBERNACION') && (
             <div className="mb-6 border-2 border-green-400 rounded-lg p-4 bg-green-50">
               <h2 className="text-xl font-bold text-green-800 mb-4">🏛️ VOTACIÓN GOBERNACION</h2>
-              
+              <p className="text-sm text-green-700 mb-4">
+                <span className="font-semibold">Nota:</span> Los votos de Gobernador y Asambleístas se guardarán en una sola acta con tipo <span className="font-bold bg-green-100 px-2 py-1 rounded">SUBNACIONAL</span>
+              </p>
+
               {/* Gobernador */}
               <div className="mb-4 p-3 bg-white rounded border border-green-200">
                 <h3 className="font-semibold text-green-700 mb-2">👤 Gobernador</h3>
@@ -984,18 +1011,23 @@ export default function EscrutinioGeneral() {
 
                 {Object.keys(organizaciones).length > 0 && (
                   <div className="mb-2">
-                    <h4 className="font-bold text-gray-800 mb-2 text-xs">Votos por Organización</h4>
+                    <h4 className="font-bold text-gray-800 mb-2 text-xs">📋 Votos por Organización - GOBERNADOR</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                       {Object.entries(organizaciones).map(([nombre, id]) => (
-                        <div key={id} className="flex items-center justify-between bg-green-50 p-2 rounded border border-green-200 text-sm">
-                          <span className="font-medium text-gray-700 text-xs">{nombre}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={actaGobernacion.votosGobernador[id] || 0}
-                            onChange={(e) => handleVotoGobernadorChange(id, e.target.value)}
-                            className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
-                          />
+                        <div key={id} className="flex flex-col bg-green-50 p-2 rounded border border-green-200 text-sm">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-green-700 text-xs">GOBERNADOR</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-gray-700 text-xs">{nombre}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={actaGobernacion.votosGobernador[id] || 0}
+                              onChange={(e) => handleVotoGobernadorChange(id, e.target.value)}
+                              className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1061,18 +1093,23 @@ export default function EscrutinioGeneral() {
 
                 {Object.keys(organizaciones).length > 0 && (
                   <div className="mb-2">
-                    <h4 className="font-bold text-gray-800 mb-2 text-xs">Votos por Organización</h4>
+                    <h4 className="font-bold text-gray-800 mb-2 text-xs">📋 Votos por Organización - ASAMBLEÍSTA POR POBLACIÓN</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                       {Object.entries(organizaciones).map(([nombre, id]) => (
-                        <div key={id} className="flex items-center justify-between bg-purple-50 p-2 rounded border border-purple-200 text-sm">
-                          <span className="font-medium text-gray-700 text-xs">{nombre}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={actaGobernacion.votosAsamPob[id] || 0}
-                            onChange={(e) => handleVotoAsamPobChange(id, e.target.value)}
-                            className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
-                          />
+                        <div key={id} className="flex flex-col bg-purple-50 p-2 rounded border border-purple-200 text-sm">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-purple-700 text-xs">ASAM. POBLACIÓN</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-gray-700 text-xs">{nombre}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={actaGobernacion.votosAsamPob[id] || 0}
+                              onChange={(e) => handleVotoAsamPobChange(id, e.target.value)}
+                              className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1138,18 +1175,23 @@ export default function EscrutinioGeneral() {
 
                 {Object.keys(organizaciones).length > 0 && (
                   <div className="mb-2">
-                    <h4 className="font-bold text-gray-800 mb-2 text-xs">Votos por Organización</h4>
+                    <h4 className="font-bold text-gray-800 mb-2 text-xs">📋 Votos por Organización - ASAMBLEÍSTA POR TERRITORIO</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                       {Object.entries(organizaciones).map(([nombre, id]) => (
-                        <div key={id} className="flex items-center justify-between bg-blue-50 p-2 rounded border border-blue-200 text-sm">
-                          <span className="font-medium text-gray-700 text-xs">{nombre}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={actaGobernacion.votosAsamTerr[id] || 0}
-                            onChange={(e) => handleVotoAsamTerrChange(id, e.target.value)}
-                            className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
-                          />
+                        <div key={id} className="flex flex-col bg-blue-50 p-2 rounded border border-blue-200 text-sm">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-blue-700 text-xs">ASAM. TERRITORIO</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-gray-700 text-xs">{nombre}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={actaGobernacion.votosAsamTerr[id] || 0}
+                              onChange={(e) => handleVotoAsamTerrChange(id, e.target.value)}
+                              className="w-16 p-1 border border-gray-300 rounded text-right font-semibold text-xs"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>

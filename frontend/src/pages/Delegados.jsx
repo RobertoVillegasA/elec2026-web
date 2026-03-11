@@ -15,6 +15,7 @@ export default function Delegados() {
     direccion: '',
     id_organizacion: '',
     id_mesa: '',
+    id_rol: 6,  // 6 = Delegado
   });
   
   // Datos de delegados
@@ -60,6 +61,10 @@ export default function Delegados() {
   // Estado para búsqueda de recintos
   const [searchTermRecinto, setSearchTermRecinto] = useState('');
 
+  // Estado para carga masiva
+  const [archivoCargaMasiva, setArchivoCargaMasiva] = useState(null);
+  const [cargaMasivaLoading, setCargaMasivaLoading] = useState(false);
+
   // Cargar datos iniciales
   useEffect(() => {
     const loadData = async () => {
@@ -73,8 +78,8 @@ export default function Delegados() {
           deptos: deptoRes.data || {},
         });
         
-        // Cargar delegados iniciales
-        const delRes = await api.get('/api/delegados/listar');
+        // Cargar delegados iniciales (solo rol Delegado = 6)
+        const delRes = await api.get('/api/delegados/listar?id_rol=6');
         const data = delRes.data || [];
         setDelegados(data);
         setFilteredDelegados(data);
@@ -248,43 +253,20 @@ export default function Delegados() {
         setIsEditing(false);
         setEditingId(null);
       } else {
-        await api.post('/api/delegados', formData);
-
-        // Crear usuario automáticamente para el delegado
-        const nombreInicial = formData.nombre.charAt(0).toLowerCase();
-        const username = formData.ci;
-        const password = formData.ci + nombreInicial;
-
-        // Buscar el ID del rol "Delegado"
-        const rolesResponse = await api.get('/api/roles');
-        const rolDelegado = rolesResponse.data.find(rol =>
-          rol.nombre_rol.toLowerCase().includes('delegado')
-        );
-
-        if (rolDelegado) {
-          const userData = {
-            username: username,
-            fullname: `${formData.nombre} ${formData.apellido}`,
-            password: password,
-            id_rol: rolDelegado.id_rol,
-            id_departamento: formDepto ? parseInt(formDepto) : null
-          };
-
-          try {
-            await api.post('/api/usuarios', userData);
-            alert(
-              `✅ Delegado registrado exitosamente.\n\n` +
-              `📋 DATOS DE ACCESO:\n` +
-              `👤 Usuario: ${username}\n` +
-              `🔑 Contraseña: ${password}\n\n` +
-              `⚠️ El delegado debe iniciar sesión en el sistema con estas credenciales.`
-            );
-          } catch (userErr) {
-            console.error('Error al crear usuario para delegado', userErr);
-            alert('✅ Delegado registrado exitosamente, pero ocurrió un error al crear el usuario.');
-          }
+        const response = await api.post('/api/delegados', formData);
+        const datos = response.data;
+        
+        // Mostrar credenciales si se creó un usuario
+        if (datos.username && datos.password) {
+          alert(
+            `✅ Delegado registrado exitosamente.\n\n` +
+            `📋 DATOS DE ACCESO:\n` +
+            `👤 Usuario: ${datos.username}\n` +
+            `🔑 Contraseña: ${datos.password}\n\n` +
+            `⚠️ El delegado debe iniciar sesión en el sistema con estas credenciales.`
+          );
         } else {
-          alert('✅ Delegado registrado exitosamente, pero no se encontró el rol de delegado.');
+          alert('✅ Delegado registrado exitosamente');
         }
       }
 
@@ -413,6 +395,58 @@ export default function Delegados() {
       } finally {
         setLoading(false);
       }
+    }
+  };
+
+  // ============ CARGA MASIVA ============
+  const handleCargaMasiva = async () => {
+    if (!archivoCargaMasiva) {
+      alert('❌ Por favor selecciona un archivo Excel para cargar');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', archivoCargaMasiva);
+
+    setCargaMasivaLoading(true);
+    try {
+      const response = await api.post('/api/delegados/carga-masiva', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      alert(
+        `✅ Carga masiva completada:\n\n` +
+        `📊 Total registros: ${response.data.total_registros}\n` +
+        `✅ Registros insertados: ${response.data.registros_insertados}\n` +
+        `❌ Registros fallidos: ${response.data.registros_fallidos}\n\n` +
+        `📝 Mensaje: ${response.data.message}`
+      );
+
+      // Limpiar el archivo seleccionado
+      setArchivoCargaMasiva(null);
+      document.getElementById('archivoCargaMasiva').value = '';
+
+      // Recargar la lista de delegados
+      loadDelegados();
+    } catch (err) {
+      console.error('Error en carga masiva', err);
+      alert('❌ Error en la carga masiva: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setCargaMasivaLoading(false);
+    }
+  };
+
+  const handleArchivoCargaMasivaChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validar que sea un archivo Excel
+      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        alert('❌ Por favor selecciona un archivo Excel válido (.xlsx o .xls)');
+        return;
+      }
+      setArchivoCargaMasiva(file);
     }
   };
 
@@ -687,6 +721,41 @@ export default function Delegados() {
           </div>
         </div>
 
+        {/* ============ CARGA MASIVA ============ */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Carga Masiva de Delegados</h2>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="flex-1 w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Selecciona archivo Excel con delegados
+              </label>
+              <input
+                type="file"
+                id="archivoCargaMasiva"
+                accept=".xlsx,.xls"
+                onChange={handleArchivoCargaMasivaChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                El archivo debe contener las columnas: nombre, apellido, ci, telefono, direccion, id_organizacion, id_mesa
+              </p>
+            </div>
+            <div className="w-full sm:w-auto">
+              <button
+                onClick={handleCargaMasiva}
+                disabled={cargaMasivaLoading || !archivoCargaMasiva}
+                className={`w-full sm:w-auto px-6 py-2 rounded-lg font-medium ${
+                  cargaMasivaLoading || !archivoCargaMasiva
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
+              >
+                {cargaMasivaLoading ? 'Cargando...' : 'Cargar Archivo'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* ============ TABLA DE DELEGADOS ============ */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-6 border-b">
@@ -752,6 +821,17 @@ export default function Delegados() {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Botón Volver al Dashboard */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 font-medium transition-all duration-300 shadow-lg hover:shadow-blue-500/30 flex items-center gap-2 mx-auto"
+          >
+            <span>↩️</span>
+            <span>Volver al Dashboard</span>
+          </button>
         </div>
       </div>
     </div>

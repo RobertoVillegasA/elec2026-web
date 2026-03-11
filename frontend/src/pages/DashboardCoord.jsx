@@ -159,6 +159,14 @@ export default function DashboardCoord() {
       shadow: 'shadow-violet-500/50'
     },
     {
+      path: '/mapa-geografico',
+      label: 'Mapa Geográfico',
+      description: 'Ver recintos y mesas',
+      icon: '🗺️',
+      gradient: 'from-green-500 to-emerald-600',
+      shadow: 'shadow-green-500/50'
+    },
+    {
       path: '/delegados',
       label: 'Administrar Delegados',
       description: 'Gestión de delegados',
@@ -363,6 +371,13 @@ export default function DashboardCoord() {
             <p className="text-blue-300 text-sm">
               © 2026 Sistema Electoral Bolivia - Panel de Coordinador
             </p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 font-medium transition-all duration-300 shadow-lg hover:shadow-blue-500/30 flex items-center gap-2 mx-auto"
+            >
+              <span>↩️</span>
+              <span>Volver al Dashboard</span>
+            </button>
           </div>
         </footer>
       </div>

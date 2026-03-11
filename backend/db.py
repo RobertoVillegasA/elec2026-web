@@ -488,6 +488,211 @@ def get_resultados_municipal():
     return resultados
 
 
+def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_municipio=None):
+    """Obtiene resumen completo de gestión de recintos, coordinadores, mesas y delegados con filtros geográficos."""
+    resumen = {
+        "total_recintos": 0,
+        "recintos_con_coordinador": 0,
+        "recintos_sin_coordinador": 0,
+        "porcentaje_recintos_cubiertos": 0,
+        "total_mesas": 0,
+        "mesas_con_delegado": 0,
+        "mesas_sin_delegado": 0,
+        "porcentaje_mesas_cubiertas": 0,
+        "total_coordinadores": 0,
+        "total_delegados": 0,
+        "recintos_detalle": [],
+        "mesas_sin_delegado_detalle": [],
+        "recintos_sin_coordinador_detalle": [],
+        "filtros_aplicados": {
+            "id_departamento": id_departamento,
+            "id_provincia": id_provincia,
+            "id_municipio": id_municipio
+        }
+    }
+
+    with DatabaseConnection() as conn:
+        if not conn:
+            return resumen
+        try:
+            cursor = conn.cursor(dictionary=True)
+
+            # Construir cláusula WHERE para filtros geográficos
+            where_joins = """
+                LEFT JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                LEFT JOIN provincias p ON muni.id_provincia = p.id_provincia
+                LEFT JOIN departamentos d ON p.id_departamento = d.id_departamento
+            """
+            
+            where_conditions = []
+            params = []
+            
+            if id_departamento is not None:
+                where_conditions.append("d.id_departamento = %s")
+                params.append(id_departamento)
+            if id_provincia is not None:
+                where_conditions.append("p.id_provincia = %s")
+                params.append(id_provincia)
+            if id_municipio is not None:
+                where_conditions.append("muni.id_municipio = %s")
+                params.append(id_municipio)
+            
+            where_clause = ""
+            if where_conditions:
+                where_clause = " AND " + " AND ".join(where_conditions)
+
+            # Total de recintos (con filtros)
+            query_total_recintos = f"""
+                SELECT COUNT(*) as total 
+                FROM recintos r
+                {where_joins}
+                WHERE 1=1{where_clause}
+            """
+            cursor.execute(query_total_recintos, params)
+            resumen["total_recintos"] = int(cursor.fetchone()["total"])
+
+            # Total de coordinadores de recinto (id_rol=5) con filtros geográficos
+            query_total_coordinadores = f"""
+                SELECT COUNT(*) as total
+                FROM delegados d
+                JOIN recintos r ON d.id_recinto = r.id_recinto
+                {where_joins}
+                WHERE d.id_rol = 5{where_clause}
+            """
+            cursor.execute(query_total_coordinadores, params)
+            resumen["total_coordinadores"] = int(cursor.fetchone()["total"])
+
+            # Recintos con coordinador (count distinct con filtros)
+            query_recintos_con_coord = f"""
+                SELECT COUNT(DISTINCT d.id_recinto) as total
+                FROM delegados d
+                JOIN recintos r ON d.id_recinto = r.id_recinto
+                {where_joins}
+                WHERE d.id_rol = 5{where_clause}
+            """
+            cursor.execute(query_recintos_con_coord, params)
+            resumen["recintos_con_coordinador"] = int(cursor.fetchone()["total"])
+
+            # Recintos sin coordinador
+            resumen["recintos_sin_coordinador"] = resumen["total_recintos"] - resumen["recintos_con_coordinador"]
+
+            # Porcentaje de recintos cubiertos
+            if resumen["total_recintos"] > 0:
+                resumen["porcentaje_recintos_cubiertos"] = round(
+                    (resumen["recintos_con_coordinador"] / resumen["total_recintos"]) * 100, 2
+                )
+
+            # Total de mesas (con filtros geográficos)
+            query_total_mesas = f"""
+                SELECT COUNT(*) as total 
+                FROM mesas m
+                JOIN recintos r ON m.id_recinto = r.id_recinto
+                {where_joins}
+                WHERE 1=1{where_clause}
+            """
+            cursor.execute(query_total_mesas, params)
+            resumen["total_mesas"] = int(cursor.fetchone()["total"])
+
+            # Total de delegados (con filtros geográficos de sus mesas)
+            query_total_delegados = f"""
+                SELECT COUNT(*) as total 
+                FROM delegados del
+                JOIN mesas m ON del.id_mesa = m.id_mesa
+                JOIN recintos r ON m.id_recinto = r.id_recinto
+                {where_joins}
+                WHERE 1=1{where_clause}
+            """
+            cursor.execute(query_total_delegados, params)
+            resumen["total_delegados"] = int(cursor.fetchone()["total"])
+
+            # Mesas con delegado (count distinct con filtros)
+            query_mesas_con_delegado = f"""
+                SELECT COUNT(DISTINCT del.id_mesa) as total
+                FROM delegados del
+                JOIN mesas m ON del.id_mesa = m.id_mesa
+                JOIN recintos r ON m.id_recinto = r.id_recinto
+                {where_joins}
+                WHERE 1=1{where_clause}
+            """
+            cursor.execute(query_mesas_con_delegado, params)
+            resumen["mesas_con_delegado"] = int(cursor.fetchone()["total"])
+
+            # Mesas sin delegado
+            resumen["mesas_sin_delegado"] = resumen["total_mesas"] - resumen["mesas_con_delegado"]
+
+            # Porcentaje de mesas cubiertas
+            if resumen["total_mesas"] > 0:
+                resumen["porcentaje_mesas_cubiertas"] = round(
+                    (resumen["mesas_con_delegado"] / resumen["total_mesas"]) * 100, 2
+                )
+
+            # Detalle de recintos con su coordinador (si tiene) - con filtros
+            query_recintos_detalle = f"""
+                SELECT
+                    r.id_recinto,
+                    r.nombre as recinto_nombre,
+                    r.direccion,
+                    r.zona,
+                    muni.nombre as municipio,
+                    p.nombre as provincia,
+                    d.nombre as departamento,
+                    del.nombre as coord_nombre,
+                    del.apellido as coord_apellido,
+                    del.ci as coord_ci,
+                    del.telefono as coord_telefono
+                FROM recintos r
+                LEFT JOIN delegados del ON r.id_recinto = del.id_recinto AND del.id_rol = 5
+                {where_joins}
+                WHERE 1=1{where_clause}
+                ORDER BY r.id_recinto ASC
+            """
+            cursor.execute(query_recintos_detalle, params)
+            resumen["recintos_detalle"] = cursor.fetchall()
+
+            # Recintos sin coordinador - con filtros
+            query_recintos_sin_coord = f"""
+                SELECT
+                    r.id_recinto,
+                    r.nombre as recinto_nombre,
+                    r.direccion,
+                    r.zona,
+                    muni.nombre as municipio,
+                    p.nombre as provincia,
+                    d.nombre as departamento
+                FROM recintos r
+                LEFT JOIN delegados del ON r.id_recinto = del.id_recinto AND del.id_rol = 5
+                {where_joins}
+                WHERE del.id_delegado IS NULL{where_clause}
+                ORDER BY r.id_recinto ASC
+            """
+            cursor.execute(query_recintos_sin_coord, params)
+            resumen["recintos_sin_coordinador_detalle"] = cursor.fetchall()
+
+            # Mesas sin delegado - con filtros
+            query_mesas_sin_delegado = f"""
+                SELECT
+                    m.id_mesa,
+                    m.numero_mesa,
+                    m.cantidad_inscritos,
+                    r.nombre as recinto,
+                    muni.nombre as municipio,
+                    p.nombre as provincia,
+                    d.nombre as departamento
+                FROM mesas m
+                JOIN recintos r ON m.id_recinto = r.id_recinto
+                {where_joins}
+                LEFT JOIN delegados del ON m.id_mesa = del.id_mesa
+                WHERE del.id_delegado IS NULL{where_clause}
+                ORDER BY r.nombre ASC, m.numero_mesa ASC
+            """
+            cursor.execute(query_mesas_sin_delegado, params)
+            resumen["mesas_sin_delegado_detalle"] = cursor.fetchall()
+
+        except Exception as e:
+            print(f"❌ Error en get_resumen_gestion_recintos: {e}")
+    return resumen
+
+
 def get_actas_subnacionales():
     """Obtiene lista de actas subnacionales con geografía y resumen de votos."""
     actas = []

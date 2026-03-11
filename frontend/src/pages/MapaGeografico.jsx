@@ -2,6 +2,63 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix para iconos de Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Componente para actualizar el centro del mapa
+function ChangeView({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.setView(center, zoom);
+    }
+  }, [center, zoom, map]);
+  return null;
+}
+
+// Componente para hacer zoom en un recinto específico
+function ZoomToRecinto({ recintoParaZoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (recintoParaZoom && recintoParaZoom.latitud && recintoParaZoom.longitud) {
+      map.flyTo([recintoParaZoom.latitud, recintoParaZoom.longitud], recintoParaZoom.zoom, {
+        duration: 1.5
+      });
+    }
+  }, [recintoParaZoom, map]);
+  return null;
+}
+
+// Componente para ajustar el mapa a todos los recintos
+function FitBoundsToRecintos({ recintos }) {
+  const map = useMap();
+  useEffect(() => {
+    if (recintos && recintos.length > 0) {
+      // Calcular los límites (bounds) de todos los recintos
+      const latitudes = recintos.map(r => r.latitud);
+      const longitudes = recintos.map(r => r.longitud);
+      
+      const minLat = Math.min(...latitudes);
+      const maxLat = Math.max(...latitudes);
+      const minLng = Math.min(...longitudes);
+      const maxLng = Math.max(...longitudes);
+      
+      // Crear bounds y ajustar el mapa con padding
+      const bounds = [[minLat, minLng], [maxLat, maxLng]];
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [recintos, map]);
+  return null;
+}
 
 export default function MapaGeografico() {
   const navigate = useNavigate();
@@ -30,6 +87,21 @@ export default function MapaGeografico() {
   const [recintoSeleccionado, setRecintoSeleccionado] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Mapa de todos los recintos
+  const [mostrarMapaRecintos, setMostrarMapaRecintos] = useState(false);
+  const [recintosConCoordenadas, setRecintosConCoordenadas] = useState([]);
+  const [loadingMapa, setLoadingMapa] = useState(false);
+  const [recintoParaZoom, setRecintoParaZoom] = useState(null);
+
+  // Función para hacer zoom en un recinto específico
+  const hacerZoomEnRecinto = (recinto) => {
+    setRecintoParaZoom({
+      latitud: recinto.latitud,
+      longitud: recinto.longitud,
+      zoom: 16
+    });
+  };
 
   // Cargar departamentos al iniciar
   useEffect(() => {
@@ -151,6 +223,70 @@ export default function MapaGeografico() {
     setBusquedaRecinto('');
   };
 
+  const cargarRecintosEnMapa = async () => {
+    if (!seleccion.id_municipio) {
+      setError('⚠️ Seleccione un municipio para ver los recintos en el mapa');
+      return;
+    }
+
+    setLoadingMapa(true);
+    setMostrarMapaRecintos(true);
+    setError('');
+    setRecintosConCoordenadas([]);
+
+    try {
+      console.log('🔍 Cargando recintos para municipio:', seleccion.id_municipio);
+      
+      // OPTIMIZADO: Obtener todos los recintos con coordenadas en una sola petición
+      const response = await api.get(`/api/recintos/municipio/${seleccion.id_municipio}/con-coordenadas`);
+
+      console.log('✅ Response del API:', response);
+      const recintosDetalles = response.data;
+
+      console.log('📍 Recintos cargados:', recintosDetalles);
+      console.log('📍 Cantidad de recintos:', recintosDetalles ? recintosDetalles.length : 0);
+
+      if (!recintosDetalles || recintosDetalles.length === 0) {
+        setError('⚠️ No hay recintos registrados en este municipio');
+        setLoadingMapa(false);
+        return;
+      }
+
+      // Filtrar recintos con coordenadas válidas
+      const recintosCoords = recintosDetalles
+        .filter(r => {
+          const tieneCoordenadas = r.latitud !== null && r.longitud !== null && 
+                                   r.latitud !== undefined && r.longitud !== undefined;
+          if (!tieneCoordenadas) {
+            console.log('⚠️ Recinto sin coordenadas:', r.nombre);
+          }
+          return tieneCoordenadas;
+        })
+        .map(r => ({
+          id: r.id_recinto,
+          nombre: r.nombre,
+          latitud: parseFloat(r.latitud),
+          longitud: parseFloat(r.longitud),
+          direccion: r.direccion,
+          zona: r.zona
+        }));
+
+      console.log('🎯 Recintos con coordenadas válidas:', recintosCoords.length);
+      console.log('🎯 Recintos con coordenadas:', recintosCoords);
+      setRecintosConCoordenadas(recintosCoords);
+
+      if (recintosCoords.length === 0) {
+        setError('⚠️ No hay recintos con coordenadas registradas en este municipio');
+      }
+    } catch (err) {
+      console.error('❌ Error al cargar recintos en el mapa:', err);
+      console.error('❌ Error details:', err.response?.data);
+      setError('❌ Error al cargar los recintos en el mapa: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setLoadingMapa(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Encabezado */}
@@ -168,7 +304,26 @@ export default function MapaGeografico() {
 
       {/* Panel de Selección */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">📍 Seleccionar Ubicación</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">📍 Seleccionar Ubicación</h2>
+          <button
+            onClick={cargarRecintosEnMapa}
+            disabled={!seleccion.id_municipio || loadingMapa}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 shadow-lg hover:shadow-blue-500/30"
+          >
+            {loadingMapa ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                <span>Cargando...</span>
+              </>
+            ) : (
+              <>
+                <span>🗺️</span>
+                <span>Ver Mapa con Todos los Recintos</span>
+              </>
+            )}
+          </button>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
           {/* Departamento */}
@@ -305,6 +460,15 @@ export default function MapaGeografico() {
                 </div>
               )}
 
+              {recintoSeleccionado.distrito_nombre && (
+                <div>
+                  <p className="text-sm text-gray-600">Distrito</p>
+                  <p className="font-semibold text-gray-800">
+                    Distrito {recintoSeleccionado.nro_distrito || '?'}
+                  </p>
+                </div>
+              )}
+
               {recintoSeleccionado.latitud && recintoSeleccionado.longitud && (
                 <>
                   <div>
@@ -393,6 +557,147 @@ export default function MapaGeografico() {
             <p className="text-sm mt-2 text-gray-500">
               Usa los filtros de arriba para buscar por departamento, provincia, municipio y recinto
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal con Mapa de Todos los Recintos */}
+      {mostrarMapaRecintos && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header del Modal */}
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-4 flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <span className="text-3xl">🗺️</span>
+                  Recintos del Municipio
+                </h2>
+                <p className="text-blue-100 text-sm mt-1">
+                  {loadingMapa ? '⏳ Cargando...' : `${recintosConCoordenadas.length} recinto(s) con coordenadas registradas`}
+                </p>
+              </div>
+              <button
+                onClick={() => setMostrarMapaRecintos(false)}
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-all duration-300 flex items-center gap-2"
+              >
+                <span className="text-xl">✕</span>
+                <span>Cerrar</span>
+              </button>
+            </div>
+
+            {/* Loading indicator */}
+            {loadingMapa && (
+              <div className="flex-1 flex items-center justify-center p-12">
+                <div className="text-center">
+                  <div className="text-6xl mb-4 animate-pulse">🗺️</div>
+                  <p className="text-xl font-semibold text-gray-700">Cargando mapa...</p>
+                  <p className="text-sm text-gray-500 mt-2">Obteniendo coordenadas de los recintos</p>
+                </div>
+              </div>
+            )}
+
+            {/* Contenido del Modal (solo si no está cargando) */}
+            {!loadingMapa && (
+            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+              {/* Mapa */}
+              <div className="flex-1 h-[60vh] lg:h-full min-h-[400px]">
+                {recintosConCoordenadas.length > 0 ? (
+                  <MapContainer
+                    center={[recintosConCoordenadas[0].latitud, recintosConCoordenadas[0].longitud]}
+                    zoom={13}
+                    scrollWheelZoom={true}
+                    className="w-full h-full"
+                    style={{ minHeight: '400px' }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <ChangeView
+                      center={[recintosConCoordenadas[0].latitud, recintosConCoordenadas[0].longitud]}
+                      zoom={13}
+                    />
+                    <FitBoundsToRecintos recintos={recintosConCoordenadas} />
+                    <ZoomToRecinto recintoParaZoom={recintoParaZoom} />
+                    {recintosConCoordenadas.map((recinto, index) => (
+                      <Marker
+                        key={recinto.id}
+                        position={[recinto.latitud, recinto.longitud]}
+                      >
+                        <Popup>
+                          <div className="p-2 max-w-xs">
+                            <h3 className="font-bold text-gray-800 mb-1">{recinto.nombre}</h3>
+                            {recinto.direccion && (
+                              <p className="text-sm text-gray-600">📍 {recinto.direccion}</p>
+                            )}
+                            {recinto.zona && (
+                              <p className="text-sm text-gray-600">Zona: {recinto.zona}</p>
+                            )}
+                            {recinto.distrito_nombre && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                🏛️ Distrito {recinto.nro_distrito || '?'}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-2">
+                              Coord: {recinto.latitud}, {recinto.longitud}
+                            </p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MapContainer>
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center min-h-[400px]">
+                    <div className="text-center text-gray-500 p-8">
+                      <p className="text-5xl mb-4">📍</p>
+                      <p className="font-medium text-lg">No hay recintos con coordenadas</p>
+                      <p className="text-sm mt-2">Los recintos de este municipio no tienen latitud y longitud registradas</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Lista de Recintos */}
+              <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 overflow-y-auto max-h-[30vh] lg:max-h-full">
+                <div className="p-4 bg-gray-50 border-b border-gray-200">
+                  <h3 className="font-bold text-gray-800">📋 Lista de Recintos</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {recintosConCoordenadas.length} registrados
+                  </p>
+                </div>
+                {recintosConCoordenadas.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <p className="text-3xl mb-2">📭</p>
+                    <p className="text-sm">Sin coordenadas</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {recintosConCoordenadas.map((recinto) => (
+                      <div
+                        key={recinto.id}
+                        onClick={() => hacerZoomEnRecinto(recinto)}
+                        className="p-3 hover:bg-blue-50 transition-colors cursor-pointer"
+                        title="Haz clic para hacer zoom en este recinto"
+                      >
+                        <p className="font-semibold text-gray-800 text-sm">{recinto.nombre}</p>
+                        {recinto.direccion && (
+                          <p className="text-xs text-gray-600 mt-1 truncate">{recinto.direccion}</p>
+                        )}
+                        {recinto.distrito_nombre && (
+                          <p className="text-xs text-blue-600 mt-1 font-medium">
+                            🏛️ Distrito {recinto.nro_distrito || '?'}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1 font-mono">
+                          {recinto.latitud}, {recinto.longitud}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            )}
           </div>
         </div>
       )}

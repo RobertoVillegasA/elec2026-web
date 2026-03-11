@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes.catalog import router as catalog_router
 from routes.escrutinio import router as escrutinio_router
 from routes.auth import router as auth_router
-# from routes.actas import router as actas_router  # ← Desactivado: endpoints están en escrutinio.py
 from routes.candidatos import router as candidatos_router
 from routes.delegados import router as delegados_router
 from routes.geografia import router as geografia_router
@@ -14,41 +13,49 @@ from routes.dashboard import router as dashboard_router
 from routes.usuarios import router as usuarios_router
 from routes.organizaciones import router as organizaciones_router
 from routes.resultados import router as geografia_router_resultados, dashboard_router as resultados_dashboard_router
-from routes.cord_distrito import router as cord_distrito_router
-from routes.cord_recinto import router as cord_recinto_router
+from routes.distritos import router as distritos_router
 
 app = FastAPI(title="Sistema Electoral Bolivia 2026")
 
 # CORS - Configurar según el entorno
 import os
 
-# Detectar si estamos en Render
-is_render = 'RENDER' in os.environ or os.getenv('PORT', '').isdigit()
+# Leer CORS_ORIGIN desde variable de entorno (se configura en Railway/Render)
+cors_origin_env = os.getenv('CORS_ORIGIN', '')
 
-# Detectar si estamos en PythonAnywhere
+# Detectar entorno
+is_railway = 'RAILWAY_ENVIRONMENT' in os.environ or 'RAILWAY_PROJECT_ID' in os.environ
+is_render = 'RENDER' in os.environ
 is_pythonanywhere = 'PYTHONANYWHERE' in os.environ or \
     os.getenv('DB_HOST', '').endswith('pythonanywhere-services.com')
 
-if is_render:
-    # Producción en Render
-    allowed_origins = [
+# Orígenes base siempre permitidos (desarrollo local)
+base_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
+if cors_origin_env:
+    # Si se configuró CORS_ORIGIN en las variables de entorno, usarlo
+    allowed_origins = base_origins + [cors_origin_env]
+elif is_railway:
+    # Railway: permitir cualquier origen de railway.app + localhost
+    allowed_origins = base_origins + [
+        "https://*.railway.app",
+        "https://*.up.railway.app",
+    ]
+elif is_render:
+    allowed_origins = base_origins + [
         "https://sistema-electoral-backend.onrender.com",
-        "http://localhost:5173",
-        "http://localhost:8000",
     ]
 elif is_pythonanywhere:
-    # Producción en PythonAnywhere
-    allowed_origins = [
+    allowed_origins = base_origins + [
         "https://tu_usuario.pythonanywhere.com",
-        "http://localhost:5173",
-        "http://localhost:8000",
     ]
 else:
     # Desarrollo local
-    allowed_origins = [
-        "http://localhost:5173",
-        "http://localhost:8000",
-    ]
+    allowed_origins = base_origins
 
 app.add_middleware(
     CORSMiddleware,
@@ -61,8 +68,7 @@ app.add_middleware(
 # Rutas corregidas
 app.include_router(catalog_router, prefix="/api")
 app.include_router(escrutinio_router, prefix="/api")
-app.include_router(auth_router, prefix="/api/auth")        # ← CORREGIDO
-# app.include_router(actas_router, prefix="/api")  # ← Desactivado: endpoints están en escrutinio.py
+app.include_router(auth_router, prefix="/api/auth")
 app.include_router(candidatos_router, prefix="/api/candidatos")
 app.include_router(delegados_router, prefix="/api")
 app.include_router(geografia_router, prefix="/api")
@@ -71,8 +77,7 @@ app.include_router(usuarios_router, prefix="/api")
 app.include_router(organizaciones_router, prefix="/api")
 app.include_router(geografia_router_resultados, prefix="/api/geografia")
 app.include_router(resultados_dashboard_router, prefix="/api/dashboard")
-app.include_router(cord_distrito_router, prefix="/api")
-app.include_router(cord_recinto_router, prefix="/api")
+app.include_router(distritos_router, prefix="/api")
 
 # Health check endpoint (sin DB)
 @app.get("/health")

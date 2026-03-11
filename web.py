@@ -1,15 +1,15 @@
-# Entry point para Render
+# web.py - Punto de entrada para Railway
+# Este archivo está en la raíz del proyecto
 import sys
 import os
 
-# Agregar backend al path
-backend_path = os.path.join(os.path.dirname(__file__), 'backend')
-if backend_path not in sys.path:
-    sys.path.insert(0, backend_path)
+# Agregar el directorio backend al path de Python
+backend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend')
+sys.path.insert(0, backend_path)
 
+# Ahora importar la app desde main (que está dentro de backend/)
 from main import app
 
-# Para gunicorn
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))

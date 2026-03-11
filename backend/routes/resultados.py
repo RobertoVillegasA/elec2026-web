@@ -486,21 +486,22 @@ async def obtener_resultados_completos(
             cursor.execute(query_asam_poblacion_org, params)
             asam_poblacion_org = cursor.fetchall()
 
-            # Procesar votos por organización para asambleista por población
-            asam_poblacion_votos_libre = 0
-            asam_poblacion_votos_creemos = 0
-            asam_poblacion_votos_cc = 0
-            for org in asam_poblacion_org:
-                if org['id_organizacion'] == 1:
-                    asam_poblacion_votos_libre = org['votos']
-                elif org['id_organizacion'] == 2:
-                    asam_poblacion_votos_creemos = org['votos']
-                elif org['id_organizacion'] == 3:
-                    asam_poblacion_votos_cc = org['votos']
+            # Obtener todas las organizaciones políticas
+            cursor.execute("SELECT id_organizacion, sigla FROM organizaciones_politicas")
+            todas_orgs = cursor.fetchall()
 
-            # Alcalde (MUNICIPAL - votos_blancos_a, votos_nulos_a)
+            # Procesar votos por organización para asambleista por población
+            # Crear diccionario dinámico con todas las organizaciones
+            asam_poblacion_votos = {}
+            for org in todas_orgs:
+                sigla_key = f"votos_{org['sigla'].lower()}"
+                # Buscar votos para esta organización
+                votos_org = next((o['votos'] for o in asam_poblacion_org if o['id_organizacion'] == org['id_organizacion']), 0)
+                asam_poblacion_votos[sigla_key] = votos_org
+
+            # Alcalde (MUNICIPAL o SUBNACIONAL - votos_blancos_a, votos_nulos_a)
             query_alcalde = f"""
-                SELECT 
+                SELECT
                     COALESCE(SUM(a.total_actas), 0) AS total_votos,
                     COALESCE(SUM(a.votos_blancos_a), 0) AS votos_blancos,
                     COALESCE(SUM(a.votos_nulos_a), 0) AS votos_nulos,
@@ -511,7 +512,7 @@ async def obtener_resultados_completos(
                 JOIN municipios mu ON r.id_municipio = mu.id_municipio
                 JOIN provincias p ON mu.id_provincia = p.id_provincia
                 JOIN departamentos d ON p.id_departamento = d.id_departamento
-                WHERE a.tipo_papeleta = 'MUNICIPAL' AND {where_clause}
+                WHERE (a.tipo_papeleta = 'MUNICIPAL' OR a.tipo_papeleta = 'SUBNACIONAL') AND {where_clause}
             """
             cursor.execute(query_alcalde, params)
             alcalde_resumen = cursor.fetchone() or {"total_votos": 0, "votos_blancos": 0, "votos_nulos": 0, "total_actas": 0}
@@ -527,7 +528,7 @@ async def obtener_resultados_completos(
                 JOIN provincias p ON mu.id_provincia = p.id_provincia
                 JOIN departamentos d ON p.id_departamento = d.id_departamento
                 JOIN organizaciones_politicas op ON vd.id_organizacion = op.id_organizacion
-                WHERE a.tipo_papeleta = 'MUNICIPAL' AND {where_clause} AND vd.tipo_voto = 'ALCALDE'
+                WHERE (a.tipo_papeleta = 'MUNICIPAL' OR a.tipo_papeleta = 'SUBNACIONAL') AND {where_clause} AND vd.tipo_voto = 'ALCALDE'
                 GROUP BY vd.id_organizacion, op.id_organizacion, op.nombre
                 ORDER BY votos DESC
             """
@@ -544,7 +545,7 @@ async def obtener_resultados_completos(
                 JOIN municipios mu ON r.id_municipio = mu.id_municipio
                 JOIN provincias p ON mu.id_provincia = p.id_provincia
                 JOIN departamentos d ON p.id_departamento = d.id_departamento
-                WHERE a.tipo_papeleta = 'MUNICIPAL' AND {where_clause} AND vd.tipo_voto = 'ALCALDE'
+                WHERE (a.tipo_papeleta = 'MUNICIPAL' OR a.tipo_papeleta = 'SUBNACIONAL') AND {where_clause} AND vd.tipo_voto = 'ALCALDE'
                 GROUP BY vd.id_organizacion
             """
             cursor.execute(query_alcalde_org, params)
@@ -562,9 +563,9 @@ async def obtener_resultados_completos(
                 elif org['id_organizacion'] == 3:
                     alcalde_votos_cc = org['votos']
 
-            # Concejal (MUNICIPAL - votos_blancos_c, votos_nulos_c)
+            # Concejal (MUNICIPAL o SUBNACIONAL - votos_blancos_c, votos_nulos_c)
             query_concejal = f"""
-                SELECT 
+                SELECT
                     COALESCE(SUM(a.total_actas), 0) AS total_votos,
                     COALESCE(SUM(a.votos_blancos_c), 0) AS votos_blancos,
                     COALESCE(SUM(a.votos_nulos_c), 0) AS votos_nulos,
@@ -575,7 +576,7 @@ async def obtener_resultados_completos(
                 JOIN municipios mu ON r.id_municipio = mu.id_municipio
                 JOIN provincias p ON mu.id_provincia = p.id_provincia
                 JOIN departamentos d ON p.id_departamento = d.id_departamento
-                WHERE a.tipo_papeleta = 'MUNICIPAL' AND {where_clause}
+                WHERE (a.tipo_papeleta = 'MUNICIPAL' OR a.tipo_papeleta = 'SUBNACIONAL') AND {where_clause}
             """
             cursor.execute(query_concejal, params)
             concejal_resumen = cursor.fetchone() or {"total_votos": 0, "votos_blancos": 0, "votos_nulos": 0, "total_actas": 0}
@@ -591,7 +592,7 @@ async def obtener_resultados_completos(
                 JOIN provincias p ON mu.id_provincia = p.id_provincia
                 JOIN departamentos d ON p.id_departamento = d.id_departamento
                 JOIN organizaciones_politicas op ON vd.id_organizacion = op.id_organizacion
-                WHERE a.tipo_papeleta = 'MUNICIPAL' AND {where_clause} AND vd.tipo_voto = 'CONCEJAL'
+                WHERE (a.tipo_papeleta = 'MUNICIPAL' OR a.tipo_papeleta = 'SUBNACIONAL') AND {where_clause} AND vd.tipo_voto = 'CONCEJAL'
                 GROUP BY vd.id_organizacion, op.id_organizacion, op.nombre
                 ORDER BY votos DESC
             """
@@ -608,7 +609,7 @@ async def obtener_resultados_completos(
                 JOIN municipios mu ON r.id_municipio = mu.id_municipio
                 JOIN provincias p ON mu.id_provincia = p.id_provincia
                 JOIN departamentos d ON p.id_departamento = d.id_departamento
-                WHERE a.tipo_papeleta = 'MUNICIPAL' AND {where_clause} AND vd.tipo_voto = 'CONCEJAL'
+                WHERE (a.tipo_papeleta = 'MUNICIPAL' OR a.tipo_papeleta = 'SUBNACIONAL') AND {where_clause} AND vd.tipo_voto = 'CONCEJAL'
                 GROUP BY vd.id_organizacion
             """
             cursor.execute(query_concejal_org, params)
@@ -675,9 +676,7 @@ async def obtener_resultados_completos(
                         "total_inscritos_provincia": total_inscritos_provincia,
                         "total_inscritos_municipio": total_inscritos_municipio,
                         "total_inscritos_recinto": total_inscritos_recinto,
-                        "votos_libre": asam_poblacion_votos_libre,
-                        "votos_creemos": asam_poblacion_votos_creemos,
-                        "votos_cc": asam_poblacion_votos_cc
+                        **asam_poblacion_votos  # Votos dinámicos de todas las organizaciones
                     }
                 },
                 "alcalde": {

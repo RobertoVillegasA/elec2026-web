@@ -42,7 +42,8 @@ export default function Dashboard() {
       'gestion-usuarios': ['admin'],
       'resultados': ['admin', 'supervisor', 'consultor', 'coordinador', 'delegado'],
       'gestion-coord-distrito': ['admin'],
-      'gestion-coord-recinto': ['admin']
+      'gestion-coord-recinto': ['admin'],
+      'gestion-recintos': ['admin', 'supervisor', 'coordinador']
     };
 
     // Normalize user role for comparison
@@ -165,6 +166,16 @@ export default function Dashboard() {
       gradient: 'from-rose-500 to-pink-600',
       shadow: 'shadow-rose-500/50',
       permission: 'gestion-coord-recinto'
+    },
+    {
+      path: '/dashboard-gestion',
+      label: 'Gestión de Recintos',
+      description: 'Avance de recintos y delegados',
+      icon: '📊',
+      gradient: 'from-amber-500 to-orange-600',
+      shadow: 'shadow-amber-500/50',
+      permission: 'gestion-recintos',
+      featured: true
     }
   ];
 

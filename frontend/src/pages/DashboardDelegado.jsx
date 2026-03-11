@@ -175,25 +175,25 @@ export default function DashboardDelegado() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <button
                 onClick={() => navigate('/escrutinio/general')}
-                className="group relative overflow-hidden p-8 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-blue-600 
-                  text-white shadow-lg shadow-violet-500/50 
-                  hover:shadow-2xl hover:shadow-violet-500/50 
+                className="group relative overflow-hidden p-8 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-blue-600
+                  text-white shadow-lg shadow-violet-500/50
+                  hover:shadow-2xl hover:shadow-violet-500/50
                   hover:scale-105 hover:-translate-y-1
                   transform transition-all duration-300 ease-out
                   border border-white/20 backdrop-blur-sm
                 "
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent
                   translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out">
                 </div>
-                
+
                 <div className="relative z-10 text-center">
                   <div className="text-6xl mb-4 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
                     🗳️
                   </div>
                   <h3 className="text-2xl font-bold mb-2">Escrutinio General</h3>
                   <p className="text-white/80">Registrar votos de Municipal y Gobernación</p>
-                  
+
                   <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
                     <span className="text-2xl">→</span>
                   </div>
@@ -201,26 +201,26 @@ export default function DashboardDelegado() {
               </button>
 
               <button
-                onClick={() => navigate('/escrutinio-gobernacion')}
-                className="group relative overflow-hidden p-8 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 
-                  text-white shadow-lg shadow-blue-500/50 
-                  hover:shadow-2xl hover:shadow-blue-500/50 
+                onClick={() => navigate('/mapa-geografico')}
+                className="group relative overflow-hidden p-8 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600
+                  text-white shadow-lg shadow-green-500/50
+                  hover:shadow-2xl hover:shadow-green-500/50
                   hover:scale-105 hover:-translate-y-1
                   transform transition-all duration-300 ease-out
                   border border-white/20 backdrop-blur-sm
                 "
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent
                   translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out">
                 </div>
-                
+
                 <div className="relative z-10 text-center">
                   <div className="text-6xl mb-4 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
-                    🏛️
+                    🗺️
                   </div>
-                  <h3 className="text-2xl font-bold mb-2">Acta Gobernación</h3>
-                  <p className="text-white/80">Registrar votos departamentales</p>
-                  
+                  <h3 className="text-2xl font-bold mb-2">Mapa Geográfico</h3>
+                  <p className="text-white/80">Ver ubicación de recintos y mesas</p>
+
                   <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
                     <span className="text-2xl">→</span>
                   </div>
@@ -253,6 +253,13 @@ export default function DashboardDelegado() {
             <p className="text-emerald-300 text-sm">
               © 2026 Sistema Electoral Bolivia - Panel de Delegado
             </p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="mt-4 px-6 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 font-medium transition-all duration-300 shadow-lg hover:shadow-emerald-500/30 flex items-center gap-2 mx-auto"
+            >
+              <span>↩️</span>
+              <span>Volver al Dashboard</span>
+            </button>
           </div>
         </footer>
       </div>

@@ -55,26 +55,54 @@ def listar_municipios(id_prov: int):
 def listar_recintos(id_muni: int):
     return get_recintos_by_municipio(id_muni)
 
-@router.get("/recintos/{id_recinto}")
-def obtener_recinto(id_recinto: int):
-    """Obtiene los detalles de un recinto incluyendo direccion, zona, latitud, longitud"""
+@router.get("/recintos/municipio/{id_muni}/con-coordenadas")
+def listar_recintos_con_coordenadas(id_muni: int):
+    """Obtiene todos los recintos de un municipio con sus coordenadas y distrito en una sola consulta"""
     try:
         with DatabaseConnection() as conn:
             if not conn:
                 raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
-            
+
             cursor = conn.cursor(dictionary=True)
             cursor.execute("""
-                SELECT id_recinto, nombre, id_municipio, id_localidad, direccion, zona, latitud, longitud
-                FROM recintos
-                WHERE id_recinto = %s
+                SELECT r.id_recinto, r.nombre, r.id_municipio, r.id_localidad, 
+                       r.direccion, r.zona, r.latitud, r.longitud,
+                       r.id_distrito, d.nro_distrito, d.localidad as distrito_nombre
+                FROM recintos r
+                LEFT JOIN distritos d ON r.id_distrito = d.id_distrito
+                WHERE r.id_municipio = %s
+                ORDER BY r.nombre
+            """, (id_muni,))
+
+            recintos = cursor.fetchall()
+            return recintos
+    except Exception as e:
+        print(f"Error al obtener recintos con coordenadas: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/recintos/{id_recinto}")
+def obtener_recinto(id_recinto: int):
+    """Obtiene los detalles de un recinto incluyendo direccion, zona, latitud, longitud y distrito"""
+    try:
+        with DatabaseConnection() as conn:
+            if not conn:
+                raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
+
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT r.id_recinto, r.nombre, r.id_municipio, r.id_localidad, 
+                       r.direccion, r.zona, r.latitud, r.longitud, 
+                       r.id_distrito, d.nro_distrito, d.localidad as distrito_nombre
+                FROM recintos r
+                LEFT JOIN distritos d ON r.id_distrito = d.id_distrito
+                WHERE r.id_recinto = %s
             """, (id_recinto,))
-            
+
             recinto = cursor.fetchone()
-            
+
             if not recinto:
                 raise HTTPException(status_code=404, detail="Recinto no encontrado")
-            
+
             return recinto
     except HTTPException:
         raise
