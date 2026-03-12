@@ -19,10 +19,17 @@ elec2026-web/
 
 | Plataforma | Estado | Notas |
 |------------|--------|-------|
-| **Railway** | ✅ Recomendado | MySQL incluido, despliegue automático |
+| **Railway** | ✅ Soportado | MySQL incluido, despliegue automático |
 | **Render** | ✅ Soportado | MySQL incluido, plan gratis disponible |
-| **PythonAnywhere** | ✅ Soportado | Requiere configuración manual |
+| **PythonAnywhere** | ✅ Soportado | **Ver `DEPLOY_PYTHONANYWHERE.md`** |
 | **VPS propio** | ✅ Soportado | Requiere configuración manual |
+
+### Guías de Despliegue
+
+- **Railway:** `DEPLOY_RAILWAY.md` o `QUICKSTART_RAILWAY.md`
+- **Render:** `DEPLOY_RENDER.md`
+- **PythonAnywhere:** `DEPLOY_PYTHONANYWHERE.md` ⭐
+- **VPS/Docker:** `SERVER_CONFIG.md`
 
 ---
 
