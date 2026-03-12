@@ -8,4 +8,4 @@ cmds = ["pip install -r requirements.txt"]
 cmds = ["echo 'Building application...'"]
 
 [start]
-cmd = "gunicorn web:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --threads 4 --worker-tmp-dir /dev/shm --bind 0.0.0.0:$PORT"
+cmd = "python web.py"
