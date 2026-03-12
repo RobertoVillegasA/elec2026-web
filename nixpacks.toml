@@ -1,8 +1,11 @@
 [phases.setup]
-nixPkgs = ["python311", "nodejs_20"]
+nixPkgs = ["python311"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
 
+[phases.build]
+cmds = ["echo 'Building application...'"]
+
 [start]
-cmd = "uvicorn web:app --host 0.0.0.0 --port $PORT"
+cmd = "gunicorn web:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --threads 4 --worker-tmp-dir /dev/shm --bind 0.0.0.0:$PORT"

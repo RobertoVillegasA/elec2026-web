@@ -1,168 +1,341 @@
-# 🚀 Guía de Despliegue en Railway
+# 🚀 Despliegue Automático en Railway - Guía Completa
 
-Esta guía te ayudará a subir tu sistema electoral a Railway de forma automática.
+Esta guía te llevará paso a paso para crear y desplegar tu proyecto completo en Railway.
 
 ---
 
 ## 📋 Requisitos Previos
 
-1. Tener cuenta en [Railway](https://railway.app)
-2. Tener tu código en GitHub (ya está en `elec2026-web`)
-3. Tener una base de datos MySQL local con datos
+1. ✅ Tener cuenta en [Railway](https://railway.app) (puedes usar tu cuenta de GitHub)
+2. ✅ Tener tu código en GitHub (repositorio `elec2026-web`)
+3. ✅ Tener Python instalado localmente
 
 ---
 
-## 🎯 Proceso Automático (Recomendado)
+## 🎯 PASO A PASO COMPLETO
 
-### Paso 1: Crear proyecto en Railway
+### PASO 1: Subir código a GitHub (si aún no lo has hecho)
 
-1. Ve a [railway.app](https://railway.app)
-2. Inicia sesión con GitHub
-3. Click **"New Project"**
-4. **"Deploy from GitHub repo"** → Selecciona `elec2026-web`
-
-### Paso 2: Agregar MySQL
-
-1. En tu proyecto Railway, click **"New"**
-2. Selecciona **"Database"** → **"MySQL"**
-3. Espera ~2 minutos a que se cree
-
-### Paso 3: Configurar variables en Railway
-
-1. Ve a tu proyecto → **Variables**
-2. Agrega estas variables:
-
-| Variable | Valor |
-|----------|-------|
-| `SECRET_KEY` | `cualquier_clave_secreta_larga_123456` |
-| `CORS_ORIGIN` | (déjalo vacío por ahora) |
-
-Railway automáticamente agrega: `MYSQLHOST`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, `MYSQLPORT`
-
-### Paso 4: Migrar tu base de datos local
-
-**Opción A - Desde Windows (Automático):**
-
-1. Abre PowerShell o CMD en la carpeta del proyecto
-2. Ejecuta:
 ```bash
-migrate_to_railway.bat
+# En la carpeta de tu proyecto
+git add .
+git commit -m "Preparar despliegue en Railway"
+git push origin main
 ```
 
-3. Sigue las instrucciones:
-   - Copia `.env.migration` a `.env`
-   - Edita `.env` con los datos de Railway
-   - El script hará todo automáticamente
+Si no tienes repositorio en GitHub:
 
-**Opción B - Manual (Más control):**
+```bash
+# Inicializar git
+git init
+git add .
+git commit -m "Initial commit"
 
-1. Copia `.env.migration` a `.env`
-2. Edita `.env` con:
-   - Tus datos locales
-   - Los datos de Railway (los ves en Railway → MySQL → Variables)
+# Crear repositorio en GitHub (desde la web de GitHub)
+# Luego conecta tu repositorio:
+git remote add origin https://github.com/TU_USUARIO/elec2026-web.git
+git push -u origin main
+```
 
-3. Ejecuta:
+---
+
+### PASO 2: Crear Proyecto en Railway
+
+1. **Ve a Railway**: Abre https://railway.app en tu navegador
+
+2. **Inicia sesión**: Click en **"Login"** → **"Sign in with GitHub"**
+
+3. **Nuevo Proyecto**: 
+   - Click en **"New Project"**
+   - Selecciona **"Deploy from GitHub repo"**
+   - Busca y selecciona `elec2026-web`
+
+4. **Espera el build inicial**: Railway comenzará a construir tu aplicación automáticamente
+
+---
+
+### PASO 3: Agregar Base de Datos MySQL
+
+1. En tu proyecto de Railway, click en **"New"** (botón azul)
+
+2. Selecciona **"Database"** → **"MySQL"**
+
+3. **Espera 2-3 minutos** a que MySQL se provisione
+
+4. Railway creará automáticamente estas variables de entorno:
+   - `MYSQLHOST`
+   - `MYSQLUSER`
+   - `MYSQLPASSWORD`
+   - `MYSQLDATABASE`
+   - `MYSQLPORT`
+
+---
+
+### PASO 4: Configurar Variables de Entorno
+
+1. Ve a la pestaña **"Variables"** de tu proyecto
+
+2. Agrega estas variables manualmente:
+
+| Variable | Valor | ¿Cómo obtenerlo? |
+|----------|-------|------------------|
+| `SECRET_KEY` | `electoral_2026_segura_clave_secreta_bolivia` | Genera una única con el comando abajo |
+| `CORS_ORIGIN` | `https://tu-proyecto.up.railway.app` | Verás la URL después del deploy |
+| `DEBUG` | `false` | - |
+| `LOG_LEVEL` | `INFO` | - |
+
+**Para generar una SECRET_KEY única:**
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+---
+
+### PASO 5: Migrar Base de Datos
+
+#### Opción A: Script Automático (Recomendado)
+
+1. **Obtén las credenciales de Railway:**
+   - Ve a tu MySQL en Railway
+   - Click en **"Variables"**
+   - Copia los valores de: `MYSQLHOST`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, `MYSQLPORT`
+
+2. **Configura el archivo de migración:**
+
+```bash
+# Copia el archivo de migración
+copy .env.migration .env
+```
+
+3. **Edita `.env`** con los datos de Railway:
+
+```env
+# Base de datos LOCAL (origen)
+LOCAL_DB_HOST=localhost
+LOCAL_DB_USER=root
+LOCAL_DB_PASSWORD=tu_password_local
+LOCAL_DB_NAME=elec2026
+
+# Base de datos RAILWAY (destino)
+MYSQLHOST=tu-mysqlhost.railway.internal
+MYSQLUSER=root
+MYSQLPASSWORD=tu_password_de_railway
+MYSQLDATABASE=elec2026
+MYSQLPORT=3306
+```
+
+4. **Ejecuta la migración:**
+
 ```bash
 python deploy_to_railway.py
 ```
 
-### Paso 5: Verificar
+#### Opción B: Manual desde Railway Shell
 
-1. En Railway, ve a **Deployments**
-2. Click **"Open Deployments"** → **"Shell"**
-3. Ejecuta:
+1. En Railway, ve a **"Deployments"** → **"Shell"**
+
+2. Ejecuta:
+
 ```bash
-mysql -u root -p$MYSQLPASSWORD -h $MYSQLHOST $MYSQLDATABASE -e "SELECT COUNT(*) FROM departamentos;"
-```
-
-Deberías ver: `9` (los 9 departamentos de Bolivia)
-
----
-
-## 🔧 Proceso Manual (Alternativo)
-
-Si prefieres hacer todo manualmente:
-
-### 1. Crear la estructura
-
-En Railway Shell:
-```bash
+# Crear tablas
 mysql -u root -p$MYSQLPASSWORD -h $MYSQLHOST $MYSQLDATABASE < backend/create_database.sql
-```
 
-### 2. Migrar datos
-
-Desde tu máquina:
-```bash
-python backend/migrate_to_railway.py
+# Verificar
+mysql -u root -p$MYSQLPASSWORD -h $MYSQLHOST $MYSQLDATABASE -e "SHOW TABLES;"
 ```
 
 ---
 
-## ⚙️ Variables de Entorno en Railway
+### PASO 6: Verificar el Despliegue
 
-Después de migrar, verifica en Railway → **Variables**:
+1. **Obtén la URL de tu aplicación:**
+   - Ve a **"Settings"** en Railway
+   - Busca **"Domains"**
+   - Tu URL será algo como: `https://elec2026-web-production.up.railway.app`
 
-| Variable | Requerida | Descripción |
-|----------|-----------|-------------|
-| `MYSQLHOST` | ✅ Auto | Host de MySQL (Railway la crea) |
-| `MYSQLUSER` | ✅ Auto | Usuario (Railway la crea) |
-| `MYSQLPASSWORD` | ✅ Auto | Password (Railway la crea) |
-| `MYSQLDATABASE` | ✅ Auto | Nombre de la BD (Railway la crea) |
-| `MYSQLPORT` | ✅ Auto | Puerto (Railway la crea) |
-| `SECRET_KEY` | ❌ Manual | Clave para JWT |
-| `CORS_ORIGIN` | ❌ Manual | Dominio del frontend |
+2. **Prueba los endpoints:**
+
+```
+# Health check (debe responder OK)
+https://tu-proyecto.up.railway.app/health
+
+# Documentación de la API
+https://tu-proyecto.up.railway.app/docs
+
+# Listado de departamentos
+https://tu-proyecto.up.railway.app/api/departamentos
+```
+
+3. **Verifica en Railway Shell:**
+
+```bash
+# Conectar a MySQL y verificar datos
+mysql -u root -p$MYSQLPASSWORD -h $MYSQLHOST $MYSQLDATABASE -e "SELECT COUNT(*) as total FROM departamentos;"
+```
+
+Debería mostrar: `9` (los 9 departamentos de Bolivia)
+
+---
+
+## 🔧 Configuración Automática con Script
+
+### Script de Despliegue Automático
+
+He creado `railway_deploy.py` que automatiza todo el proceso:
+
+```bash
+python railway_deploy.py
+```
+
+Este script:
+1. ✅ Verifica tu conexión a GitHub
+2. ✅ Crea el proyecto en Railway
+3. ✅ Agrega MySQL
+4. ✅ Configura variables de entorno
+5. ✅ Inicia el despliegue
+6. ✅ Migra la base de datos
+
+---
+
+## 🐛 Solución de Problemas Comunes
+
+### Error: "Build failed"
+
+**Causa:** Falta algún archivo o dependencia
+
+**Solución:**
+```bash
+# Verifica que estos archivos existan:
+- requirements.txt
+- web.py
+- railway.json
+- nixpacks.toml
+
+# Revisa los logs en Railway → Deployments → View Logs
+```
+
+### Error: "Cannot connect to database"
+
+**Causa:** MySQL no está listo o las variables están incorrectas
+
+**Solución:**
+1. Espera 2-3 minutos después de crear MySQL
+2. Verifica las variables en Railway → Variables
+3. Asegúrate de que `MYSQLHOST` termine en `.railway.internal`
+
+### Error: "CORS blocked"
+
+**Causa:** El frontend está en un dominio no permitido
+
+**Solución:**
+1. Agrega `CORS_ORIGIN` en Railway Variables
+2. Usa la URL completa: `https://tu-proyecto.up.railway.app`
+
+### Error: "Module not found: fastapi"
+
+**Causa:** requirements.txt no se instaló correctamente
+
+**Solución:**
+```bash
+# En Railway Shell:
+pip install -r requirements.txt
+```
+
+### El proyecto no aparece en GitHub
+
+**Solución:**
+```bash
+# Verifica que hiciste push:
+git status
+git push origin main
+
+# Verifica en GitHub.com que tu código esté ahí
+```
+
+---
+
+## 📊 Monitoreo y Logs
+
+### Ver Logs en Tiempo Real
+
+1. Railway → Tu proyecto → **"Deployments"**
+2. Click en **"View Logs"**
+
+### Ver Uso de Recursos
+
+1. Railway → Tu proyecto → **"Usage"**
+2. Ves RAM, CPU, y ancho de banda
+
+### Reiniciar el Servicio
+
+1. Railway → Tu proyecto → **"Deployments"**
+2. Click en **"Restart"**
+
+---
+
+## 🔐 Seguridad Post-Despliegue
+
+### ✅ Checklist de Seguridad
+
+- [ ] Cambiar contraseña del usuario `admin` por defecto
+- [ ] Generar una `SECRET_KEY` única y segura
+- [ ] Configurar `CORS_ORIGIN` con tu dominio real
+- [ ] Habilitar autenticación de dos factores en Railway
+- [ ] Revisar logs regularmente
+
+### Generar SECRET_KEY Segura
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Ejemplo de resultado: `xK9mP2nQ7vR4sT8wY3zA6bC1dE5fG0hI`
+
+---
+
+## 💰 Costos en Railway
+
+### Plan Hobby (Gratis)
+
+- $5 USD de crédito mensual
+- 512 MB RAM incluidos gratis
+- 1 GB de base de datos MySQL
+
+### Plan Pro
+
+- $20 USD/mes
+- Recursos adicionales según uso
+
+**Estimado para este proyecto:** ~$5-10 USD/mes
 
 ---
 
 ## 🎉 ¡Listo!
 
-Tu sistema debería estar corriendo en:
-```
-https://tu-proyecto.up.railway.app
-```
+Tu sistema electoral está corriendo en:
 
-El endpoint de health check:
 ```
-https://tu-proyecto.up.railway.app/health
+🌐 URL: https://tu-proyecto.up.railway.app
+📚 API Docs: https://tu-proyecto.up.railway.app/docs
+💾 Health: https://tu-proyecto.up.railway.app/health
 ```
 
-La documentación de la API:
-```
-https://tu-proyecto.up.railway.app/docs
-```
+### Próximos Pasos
 
----
+1. **Configurar dominio personalizado** (opcional):
+   - Railway → Settings → Domains → Add Custom Domain
 
-## 🐛 Solución de Problemas
+2. **Desplegar el frontend**:
+   - Sube el frontend a Vercel/Netlify
+   - Configura `CORS_ORIGIN` con la URL del frontend
 
-### Error: "No se pudo conectar a Railway"
+3. **Configurar backups**:
+   - Usa Railway → MySQL → Backups
 
-- Verifica que MySQL esté creado en Railway
-- Espera 2-3 minutos después de crear MySQL
-- Revisa las variables en Railway → MySQL → Variables
-
-### Error: "Foreign key constraint fails"
-
-Ejecuta en Railway Shell:
-```bash
-mysql -u root -p$MYSQLPASSWORD -h $MYSQLHOST $MYSQLDATABASE -e "SET FOREIGN_KEY_CHECKS = 0;"
-```
-
-Luego vuelve a correr la migración.
-
-### Error: "Access denied"
-
-- Verifica que `MYSQLPASSWORD` sea correcto
-- Asegúrate de usar `MYSQLHOST` y no `host`
-
-### El deploy falla
-
-1. Ve a Railway → Deployments → Ver logs
-2. Revisa errores comunes:
-   - Falta `SECRET_KEY`
-   - Error de conexión a MySQL
-   - Puerto incorrecto
+4. **Monitoreo**:
+   - Revisa los logs diariamente
+   - Configura alertas de uso
 
 ---
 
@@ -170,31 +343,11 @@ Luego vuelve a correr la migración.
 
 Si tienes problemas:
 
-1. Revisa los logs en Railway
-2. Verifica las variables de entorno
-3. Asegúrate de que MySQL esté activo
+1. **Revisa los logs** en Railway
+2. **Verifica las variables** de entorno
+3. **Consulta** la documentación: https://docs.railway.app
+4. **Comunidad**: https://community.railway.app
 
 ---
 
-## 🔐 Seguridad
-
-**IMPORTANTE:** Después del despliegue:
-
-1. Cambia la contraseña del usuario `admin` por defecto
-2. Genera una `SECRET_KEY` única y segura
-3. Configura `CORS_ORIGIN` con tu dominio real
-
----
-
-## 📊 Monitoreo
-
-En Railway puedes ver:
-
-- **Usage**: Uso de recursos
-- **Deployments**: Historial de despliegues
-- **Logs**: Logs en tiempo real
-- **Settings**: Configuración del proyecto
-
----
-
-**¡Éxito con tu despliegue! 🎉**
+**¡Éxito con tu despliegue! 🇧🇴🎉**

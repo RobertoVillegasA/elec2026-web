@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: elec2026-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=sistema_electoral
+      - DB_USER=electoral
+      - DB_PASSWORD=${DB_PASSWORD:-changeme}
+      - SECRET_KEY=${SECRET_KEY:-changeme}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/static:/app/backend/static
+    networks:
+      - elec2026-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: mysql:8.0
+    container_name: elec2026-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: sistema_electoral
+      MYSQL_USER: electoral
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/create_database.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - elec2026-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "electoral", "-p${DB_PASSWORD:-changeme}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+
+networks:
+  elec2026-network:
+    driver: bridge

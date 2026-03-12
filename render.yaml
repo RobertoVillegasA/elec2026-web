@@ -5,7 +5,8 @@ services:
     region: oregon
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn web:app --host 0.0.0.0 --port $PORT
+    startCommand: gunicorn web:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --threads 4 --bind 0.0.0.0:$PORT
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -13,6 +14,10 @@ services:
         fromDatabase:
           name: sistema-electoral-db
           property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: sistema-electoral-db
+          property: port
       - key: DB_NAME
         fromDatabase:
           name: sistema-electoral-db
@@ -29,6 +34,10 @@ services:
         generateValue: true
       - key: CORS_ORIGIN
         value: https://tu-frontend.onrender.com
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
 
 databases:
   - name: sistema-electoral-db

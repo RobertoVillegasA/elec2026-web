@@ -65,3 +65,29 @@ backend/google_oauth_credentials.json
 backend/google_token.json
 backend/token.pickle
 *.json.secret
+
+# Docker
+*.pid
+*.seed
+*.lock
+
+# SSL Certificates
+ssl/
+*.crt
+*.key
+*.pem
+!*.pem.example
+
+# Database dumps
+*.sql
+!create_database.sql
+!init.sql
+
+# Backup files
+*.bak
+backup/
+backups/
+
+# Secrets
+secrets/
+*.secret
