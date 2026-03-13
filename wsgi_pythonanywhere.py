@@ -9,7 +9,7 @@ import sys
 import os
 
 # Agregar el proyecto al path
-project_home = '/home/tu_usuario/elec2026-web'
+project_home = '/home/Hughost/elec2026-web'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
@@ -21,11 +21,11 @@ if backend_path not in sys.path:
 # Configurar variables de entorno
 # IMPORTANTE: Reemplaza con tus valores reales
 os.environ['SECRET_KEY'] = 'tu_clave_secreta_generada_con_python_secrets_token_urlsafe_32'
-os.environ['DB_HOST'] = 'tu_usuario.mysql.pythonanywhere-services.com'
+os.environ['DB_HOST'] = 'Hughost.mysql.pythonanywhere-services.com'
 os.environ['DB_NAME'] = 'elec2026'
-os.environ['DB_USER'] = 'tu_usuario'
-os.environ['DB_PASSWORD'] = 'tu_password_de_pythonanywhere'
-os.environ['CORS_ORIGIN'] = 'https://tu_usuario.pythonanywhere.com'
+os.environ['DB_USER'] = 'Hughost'
+os.environ['DB_PASSWORD'] = 'Libre2026!'
+os.environ['CORS_ORIGIN'] = 'https://Hughost.pythonanywhere.com'
 os.environ['DEBUG'] = 'False'
 os.environ['LOG_LEVEL'] = 'INFO'
 
