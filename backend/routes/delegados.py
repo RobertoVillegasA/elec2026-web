@@ -23,23 +23,32 @@ class DelegadoSchema(BaseModel):
 
 @router.get("/delegados/listar")
 def listar_delegados(
-    departamento: int = Query(None),
-    provincia: int = Query(None),
-    municipio: int = Query(None),
-    recinto: int = Query(None),
-    organizacion: int = Query(None),
-    id_rol: int = Query(None)  # Filtro por rol (4=Coord_distrito, 5=Coord_recinto, 6=Delegado)
+    departamento: Optional[int] = Query(None),
+    provincia: Optional[int] = Query(None),
+    municipio: Optional[int] = Query(None),
+    recinto: Optional[int] = Query(None),
+    organizacion: Optional[int] = Query(None),
+    id_rol: Optional[int] = Query(None)  # Filtro por rol (4=Coord_distrito, 5=Coord_recinto, 6=Delegado)
 ):
     """Lista delegados con filtros geográficos y por rol."""
     try:
+        import os
+        debug = os.getenv('DEBUG', 'false').lower() == 'true'
+        
+        if debug:
+            print(f"🔍 listar_delegados - Filtros: dept={departamento}, prov={provincia}, muni={municipio}, recinto={recinto}, org={organizacion}, rol={id_rol}")
+        
         delegados = []
         with DatabaseConnection() as conn:
             if not conn:
+                if debug:
+                    print("❌ No se pudo conectar a la base de datos")
                 raise HTTPException(status_code=500, detail="No se pudo conectar a la base de datos")
 
             cursor = conn.cursor(dictionary=True)
 
-            # Construir query con filtros
+            # Construir query con filtros - usando LEFT JOIN para evitar perder datos
+            # Los JOINs van directamente desde delegados para evitar problemas en cascada
             query = """
                 SELECT
                     d.id_delegado,
@@ -56,53 +65,77 @@ def listar_delegados(
                     r.nombre_rol,
                     o.sigla AS organizacion_sigla,
                     m.numero_mesa,
-                    rec.id_recinto,
+                    rec.id_recinto AS recinto_id,
                     rec.nombre AS recinto,
-                    dt.nro_distrito,
+                    rec.id_municipio,
                     mu.id_municipio,
                     mu.nombre AS municipio,
+                    mu.id_provincia,
                     p.id_provincia,
                     p.nombre AS provincia,
+                    p.id_departamento,
                     dep.id_departamento,
-                    dep.nombre AS departamento
+                    dep.nombre AS departamento,
+                    dt.nro_distrito
                 FROM delegados d
                 LEFT JOIN roles r ON d.id_rol = r.id_rol
                 LEFT JOIN organizaciones_politicas o ON d.id_organizacion = o.id_organizacion
                 LEFT JOIN mesas m ON d.id_mesa = m.id_mesa
-                LEFT JOIN recintos rec ON m.id_recinto = rec.id_recinto
-                LEFT JOIN distritos dt ON d.id_distrito = dt.id_distrito
+                LEFT JOIN recintos rec ON (d.id_recinto = rec.id_recinto OR m.id_recinto = rec.id_recinto)
                 LEFT JOIN municipios mu ON rec.id_municipio = mu.id_municipio
                 LEFT JOIN provincias p ON mu.id_provincia = p.id_provincia
                 LEFT JOIN departamentos dep ON p.id_departamento = dep.id_departamento
+                LEFT JOIN distritos dt ON d.id_distrito = dt.id_distrito
                 WHERE 1=1
             """
 
             params = []
-            if departamento is not None:
+            # Verificar y convertir a int explícitamente para evitar errores de tipo
+            # Usar 'is not None' porque Query(None) puede no ser igual a None directamente
+            if departamento is not None and departamento != '':
                 query += " AND dep.id_departamento = %s"
-                params.append(departamento)
-            if provincia is not None:
+                params.append(int(departamento))
+            if provincia is not None and provincia != '':
                 query += " AND p.id_provincia = %s"
-                params.append(provincia)
-            if municipio is not None:
+                params.append(int(provincia))
+            if municipio is not None and municipio != '':
                 query += " AND mu.id_municipio = %s"
-                params.append(municipio)
-            if recinto is not None:
+                params.append(int(municipio))
+            if recinto is not None and recinto != '':
                 query += " AND rec.id_recinto = %s"
-                params.append(recinto)
-            if organizacion is not None:
+                params.append(int(recinto))
+            if organizacion is not None and organizacion != '':
                 query += " AND d.id_organizacion = %s"
-                params.append(organizacion)
-            if id_rol is not None:
+                params.append(int(organizacion))
+            if id_rol is not None and id_rol != '':
                 query += " AND d.id_rol = %s"
-                params.append(id_rol)
+                params.append(int(id_rol))
 
             query += " ORDER BY d.id_delegado DESC"
 
-            cursor.execute(query, params)
-            delegados = cursor.fetchall()
+            if debug:
+                print(f"📝 Query ejecutada con {len(params)} parámetros")
+                # Ejecutar y mostrar error detallado si falla
+                try:
+                    cursor.execute(query, params)
+                    delegados = cursor.fetchall()
+                    print(f"✅ {len(delegados)} delegados encontrados")
+                    if delegados and debug:
+                        print(f"📋 Primer delegado: {delegados[0]}")
+                except Exception as e:
+                    print(f"❌ Error en query: {e}")
+                    print(f"Query: {query}")
+                    print(f"Params: {params}")
+                    raise
+            else:
+                cursor.execute(query, params)
+                delegados = cursor.fetchall()
+                
         return delegados
     except Exception as e:
+        import traceback
+        print(f"❌ Error al cargar delegados: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error al cargar delegados: {str(e)}")
 
 @router.post("/delegados")
@@ -230,14 +263,29 @@ def editar_delegado(id_delegado: int, delegado: DelegadoSchema):
 
 @router.delete("/delegados/eliminar/{id_delegado}")
 def eliminar_delegado(id_delegado: int):
-    """Elimina un delegado por ID."""
+    """Elimina un delegado y su usuario asociado por ID."""
     with DatabaseConnection() as conn:
         if conn:
-            cursor = conn.cursor()
+            cursor = conn.cursor(dictionary=True)
+            
+            # Obtener datos del delegado para generar el username
+            cursor.execute("SELECT ci, nombre FROM delegados WHERE id_delegado = %s", (id_delegado,))
+            delegado = cursor.fetchone()
+            
+            if not delegado:
+                raise HTTPException(status_code=404, detail="Delegado no encontrado")
+            
+            # Eliminar el usuario asociado (username = CI + inicial del nombre)
+            nombre_inicial = delegado['nombre'][0].lower() if delegado['nombre'] else ''
+            username = f"{delegado['ci']}{nombre_inicial}"
+            
+            cursor.execute("DELETE FROM usuarios WHERE username = %s", (username,))
+            
+            # Eliminar el delegado
             cursor.execute("DELETE FROM delegados WHERE id_delegado = %s", (id_delegado,))
-            if cursor.rowcount > 0:
-                conn.commit()
-                return {"message": "Eliminado exitosamente"}
+            
+            conn.commit()
+            return {"message": "Delegado y usuario eliminados exitosamente"}
     raise HTTPException(status_code=404, detail="No encontrado")
 
 @router.get("/delegados/{id_delegado}")

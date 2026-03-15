@@ -3,6 +3,8 @@ import mysql.connector
 import bcrypt
 import threading
 import time
+import os
+from datetime import datetime
 from mysql.connector.pooling import MySQLConnectionPool
 from mysql_config import MYSQL_CONFIG, RETRY_CONFIG
 
@@ -517,16 +519,10 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
         try:
             cursor = conn.cursor(dictionary=True)
 
-            # Construir cláusula WHERE para filtros geográficos
-            where_joins = """
-                LEFT JOIN municipios muni ON r.id_municipio = muni.id_municipio
-                LEFT JOIN provincias p ON muni.id_provincia = p.id_provincia
-                LEFT JOIN departamentos d ON p.id_departamento = d.id_departamento
-            """
-            
+            # Construir condiciones WHERE para filtros geográficos
             where_conditions = []
             params = []
-            
+
             if id_departamento is not None:
                 where_conditions.append("d.id_departamento = %s")
                 params.append(id_departamento)
@@ -536,16 +532,24 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
             if id_municipio is not None:
                 where_conditions.append("muni.id_municipio = %s")
                 params.append(id_municipio)
-            
+
             where_clause = ""
             if where_conditions:
                 where_clause = " AND " + " AND ".join(where_conditions)
 
-            # Total de recintos (con filtros)
+            # Debug para desarrollo local
+            if os.getenv('DEBUG', 'false').lower() == 'true':
+                print(f"🔍 Filtros: dept={id_departamento}, prov={id_provincia}, muni={id_municipio}")
+                print(f"🔍 WHERE clause: {where_clause}")
+                print(f"🔍 Params: {params}")
+
+            # Total de recintos (con filtros geográficos)
             query_total_recintos = f"""
-                SELECT COUNT(*) as total 
+                SELECT COUNT(*) as total
                 FROM recintos r
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos d ON p.id_departamento = d.id_departamento
                 WHERE 1=1{where_clause}
             """
             cursor.execute(query_total_recintos, params)
@@ -556,7 +560,9 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
                 SELECT COUNT(*) as total
                 FROM delegados d
                 JOIN recintos r ON d.id_recinto = r.id_recinto
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos dep ON p.id_departamento = dep.id_departamento
                 WHERE d.id_rol = 5{where_clause}
             """
             cursor.execute(query_total_coordinadores, params)
@@ -567,7 +573,9 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
                 SELECT COUNT(DISTINCT d.id_recinto) as total
                 FROM delegados d
                 JOIN recintos r ON d.id_recinto = r.id_recinto
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos dep ON p.id_departamento = dep.id_departamento
                 WHERE d.id_rol = 5{where_clause}
             """
             cursor.execute(query_recintos_con_coord, params)
@@ -584,10 +592,12 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
 
             # Total de mesas (con filtros geográficos)
             query_total_mesas = f"""
-                SELECT COUNT(*) as total 
+                SELECT COUNT(*) as total
                 FROM mesas m
                 JOIN recintos r ON m.id_recinto = r.id_recinto
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos d ON p.id_departamento = d.id_departamento
                 WHERE 1=1{where_clause}
             """
             cursor.execute(query_total_mesas, params)
@@ -595,11 +605,13 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
 
             # Total de delegados (con filtros geográficos de sus mesas)
             query_total_delegados = f"""
-                SELECT COUNT(*) as total 
+                SELECT COUNT(*) as total
                 FROM delegados del
                 JOIN mesas m ON del.id_mesa = m.id_mesa
                 JOIN recintos r ON m.id_recinto = r.id_recinto
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos d ON p.id_departamento = d.id_departamento
                 WHERE 1=1{where_clause}
             """
             cursor.execute(query_total_delegados, params)
@@ -611,7 +623,9 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
                 FROM delegados del
                 JOIN mesas m ON del.id_mesa = m.id_mesa
                 JOIN recintos r ON m.id_recinto = r.id_recinto
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos d ON p.id_departamento = d.id_departamento
                 WHERE 1=1{where_clause}
             """
             cursor.execute(query_mesas_con_delegado, params)
@@ -642,7 +656,9 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
                     del.telefono as coord_telefono
                 FROM recintos r
                 LEFT JOIN delegados del ON r.id_recinto = del.id_recinto AND del.id_rol = 5
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos d ON p.id_departamento = d.id_departamento
                 WHERE 1=1{where_clause}
                 ORDER BY r.id_recinto ASC
             """
@@ -661,7 +677,9 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
                     d.nombre as departamento
                 FROM recintos r
                 LEFT JOIN delegados del ON r.id_recinto = del.id_recinto AND del.id_rol = 5
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos d ON p.id_departamento = d.id_departamento
                 WHERE del.id_delegado IS NULL{where_clause}
                 ORDER BY r.id_recinto ASC
             """
@@ -680,7 +698,9 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
                     d.nombre as departamento
                 FROM mesas m
                 JOIN recintos r ON m.id_recinto = r.id_recinto
-                {where_joins}
+                JOIN municipios muni ON r.id_municipio = muni.id_municipio
+                JOIN provincias p ON muni.id_provincia = p.id_provincia
+                JOIN departamentos d ON p.id_departamento = d.id_departamento
                 LEFT JOIN delegados del ON m.id_mesa = del.id_mesa
                 WHERE del.id_delegado IS NULL{where_clause}
                 ORDER BY r.nombre ASC, m.numero_mesa ASC
@@ -690,6 +710,8 @@ def get_resumen_gestion_recintos(id_departamento=None, id_provincia=None, id_mun
 
         except Exception as e:
             print(f"❌ Error en get_resumen_gestion_recintos: {e}")
+            import traceback
+            traceback.print_exc()
     return resumen
 
 
@@ -800,7 +822,7 @@ def save_acta_subnacional(acta_info, votos_partidos):
 
             fecha_registro = acta_info.get('fecha_registro')
             if not fecha_registro:
-                fecha_registro = datetime.utcnow().isoformat()
+                fecha_registro = datetime.utcnow()
 
             cursor.execute("""
                 INSERT INTO actas (
@@ -816,7 +838,7 @@ def save_acta_subnacional(acta_info, votos_partidos):
             """, (
                 acta_info['id_mesa'],
                 acta_info['tipo'],
-                acta_data['codigo_acta'],  # ← Añadido
+                acta_info.get('codigo_acta') or None,
                 acta_info['blancos'],
                 acta_info['nulos'],
                 acta_info.get('observaciones') or None,

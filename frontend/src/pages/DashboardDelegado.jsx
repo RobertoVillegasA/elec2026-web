@@ -18,14 +18,31 @@ export default function DashboardDelegado() {
           const user = JSON.parse(storedUserData);
           setUserData(user);
 
+          // Extraer CI del username (formato: "{ci}{inicial}")
+          const ciMatch = user.username?.match(/^(\d+)[a-z]?$/i);
+          const ci = ciMatch ? ciMatch[1] : user.username;
+
+          console.log('🔍 Buscando delegado con CI:', ci);
+          console.log('👤 User data:', user);
+
           const delegadosResponse = await api.get('/api/delegados/listar');
-          const delegado = delegadosResponse.data.find(d => d.ci === user.username);
+          console.log('📋 Total delegados recibidos:', delegadosResponse.data.length);
+          
+          const delegado = delegadosResponse.data.find(d => {
+            console.log('  - Delegado CI:', d.ci, '- Match:', d.ci === ci);
+            return d.ci === ci;
+          });
+          
           if (delegado) {
+            console.log('✅ Delegado encontrado:', delegado);
             setDelegadoData(delegado);
+          } else {
+            console.warn('⚠️ No se encontró delegado con CI:', ci);
+            console.log('📋 Primeros 3 delegados:', delegadosResponse.data.slice(0, 3));
           }
         }
       } catch (err) {
-        console.error('Error al cargar datos del delegado', err);
+        console.error('❌ Error al cargar datos del delegado', err);
       } finally {
         setLoading(false);
       }

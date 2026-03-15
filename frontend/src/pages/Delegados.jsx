@@ -360,38 +360,16 @@ export default function Delegados() {
 
   // ============ ELIMINAR ============
   const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este delegado?')) {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este delegado? Esta acción también eliminará su usuario asociado.')) {
       setLoading(true);
       try {
-        // Primero obtener los datos del delegado para obtener su CI (que es el username del usuario)
-        const delegadoResponse = await api.get(`/api/delegados/${id}`);
-        const delegado = delegadoResponse.data;
-        const ciDelegado = delegado.ci;
-
-        // Eliminar el delegado
+        // El backend elimina tanto el delegado como el usuario asociado
         await api.delete(`/api/delegados/eliminar/${id}`);
-
-        // Buscar y eliminar el usuario correspondiente
-        try {
-          // Buscar el usuario por su username (que es el CI del delegado)
-          const usuariosResponse = await api.get('/api/usuarios');
-          const usuarioAEliminar = usuariosResponse.data.find(usuario => usuario.username === ciDelegado);
-
-          if (usuarioAEliminar) {
-            await api.delete(`/api/usuarios/${usuarioAEliminar.id_usuario}`);
-            alert(`✅ Delegado y usuario eliminados exitosamente`);
-          } else {
-            alert('✅ Delegado eliminado exitosamente, pero no se encontró un usuario asociado.');
-          }
-        } catch (userErr) {
-          console.error('Error al eliminar usuario del delegado', userErr);
-          alert('✅ Delegado eliminado exitosamente, pero ocurrió un error al eliminar el usuario asociado.');
-        }
-
+        alert('✅ Delegado y usuario eliminados exitosamente');
         loadDelegados();
       } catch (err) {
         console.error('Error', err);
-        alert('❌ Error al eliminar delegado');
+        alert('❌ Error al eliminar delegado: ' + (err.response?.data?.detail || err.message));
       } finally {
         setLoading(false);
       }
@@ -778,6 +756,7 @@ export default function Delegados() {
                     <th className="px-6 py-3 text-left text-sm font-bold text-gray-700">Teléfono</th>
                     <th className="px-6 py-3 text-left text-sm font-bold text-gray-700">Dirección</th>
                     <th className="px-6 py-3 text-left text-sm font-bold text-gray-700">Organización</th>
+                    <th className="px-6 py-3 text-left text-sm font-bold text-gray-700">Rol</th>
                     <th className="px-6 py-3 text-left text-sm font-bold text-gray-700">Departamento</th>
                     <th className="px-6 py-3 text-left text-sm font-bold text-gray-700">Provincia</th>
                     <th className="px-6 py-3 text-left text-sm font-bold text-gray-700">Municipio</th>
@@ -794,6 +773,11 @@ export default function Delegados() {
                       <td className="px-6 py-4 text-sm">{delegado.telefono || '-'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{delegado.direccion}</td>
                       <td className="px-6 py-4 text-sm font-bold text-blue-600">{delegado.organizacion_sigla}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                          {delegado.nombre_rol || 'N/A'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-sm">{delegado.departamento}</td>
                       <td className="px-6 py-4 text-sm">{delegado.provincia}</td>
                       <td className="px-6 py-4 text-sm">{delegado.municipio}</td>
