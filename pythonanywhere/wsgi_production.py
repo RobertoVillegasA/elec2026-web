@@ -48,8 +48,9 @@ os.environ['LOG_LEVEL'] = 'INFO'
 # ============================================
 # IMPORTAR LA APLICACIÓN
 # ============================================
+# Nota: Importar desde web.py (no main.py) porque web.py es el entry point
 try:
-    from web import app as application
+    from web import app as application  # web.py contiene el punto de entrada principal
     application.title = "Sistema Electoral Bolivia 2026"
 
 except Exception as e:
