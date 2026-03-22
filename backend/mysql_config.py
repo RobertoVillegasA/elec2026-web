@@ -45,12 +45,12 @@ elif is_render:
         DB_NAME = os.getenv('DB_NAME', 'elec2026')
         DB_PORT = int(os.getenv('DB_PORT', '3306'))
 elif is_pythonanywhere:
-    # PythonAnywhere
-    DB_HOST = os.getenv('DB_HOST', 'localhost')
-    DB_USER = os.getenv('DB_USER', 'root')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
-    DB_NAME = os.getenv('DB_NAME', 'elec2026')
-    DB_PORT = int(os.getenv('DB_PORT', '3306'))
+    # PythonAnywhere - Configuración HARDCODEADA para giovann
+    DB_HOST = 'giovann.mysql.pythonanywhere-services.com'
+    DB_USER = 'giovann'
+    DB_PASSWORD = 'libre2026!!'  # Contraseña de PythonAnywhere
+    DB_NAME = 'giovann$elec2026'
+    DB_PORT = 3306
 else:
     # Desarrollo local
     DB_HOST = os.getenv('DB_HOST', 'localhost')
