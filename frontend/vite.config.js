@@ -14,5 +14,6 @@ export default defineConfig({
     assetsDir: 'static',
     sourcemap: false,
     minify: 'terser'
-  }
+  },
+  base: '/app/'  // Subruta para PythonAnywhere
 })
