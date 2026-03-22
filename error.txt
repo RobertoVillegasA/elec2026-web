@@ -1,0 +1,371 @@
+2026-03-22 07:59:52,996: Error running WSGI application
+2026-03-22 07:59:53,007: ModuleNotFoundError: No module named 'main'
+2026-03-22 07:59:53,007:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 07:59:53,007:     from main import app as application
+2026-03-22 07:59:53,007: ***************************************************
+2026-03-22 07:59:53,007: If you're seeing an import error and don't know why,
+2026-03-22 07:59:53,008: we have a dedicated help page to help you debug: 
+2026-03-22 07:59:53,008: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 07:59:53,008: ***************************************************
+2026-03-22 07:59:57,425: Error running WSGI application
+2026-03-22 07:59:57,443: ModuleNotFoundError: No module named 'main'
+2026-03-22 07:59:57,443:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 07:59:57,443:     from main import app as application
+2026-03-22 07:59:57,443: ***************************************************
+2026-03-22 07:59:57,444: If you're seeing an import error and don't know why,
+2026-03-22 07:59:57,444: we have a dedicated help page to help you debug: 
+2026-03-22 07:59:57,444: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 07:59:57,444: ***************************************************
+2026-03-22 08:02:35,392: Error running WSGI application
+2026-03-22 08:02:35,399: ModuleNotFoundError: No module named 'pandas'
+2026-03-22 08:02:35,399:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 08:02:35,399:     from main import app as application
+2026-03-22 08:02:35,400: 
+2026-03-22 08:02:35,400:   File "/home/giovann/elec2026-web/backend/main.py", line 10, in <module>
+2026-03-22 08:02:35,400:     from routes.delegados import router as delegados_router
+2026-03-22 08:02:35,400: 
+2026-03-22 08:02:35,400:   File "/home/giovann/elec2026-web/backend/routes/delegados.py", line 7, in <module>
+2026-03-22 08:02:35,400:     import pandas as pd
+2026-03-22 08:02:35,400: ***************************************************
+2026-03-22 08:02:35,401: If you're seeing an import error and don't know why,
+2026-03-22 08:02:35,401: we have a dedicated help page to help you debug: 
+2026-03-22 08:02:35,401: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 08:02:35,401: ***************************************************
+2026-03-22 08:03:01,503: Error running WSGI application
+2026-03-22 08:03:01,505: ModuleNotFoundError: No module named 'pandas'
+2026-03-22 08:03:01,505:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 08:03:01,506:     from main import app as application
+2026-03-22 08:03:01,506: 
+2026-03-22 08:03:01,506:   File "/home/giovann/elec2026-web/backend/main.py", line 10, in <module>
+2026-03-22 08:03:01,506:     from routes.delegados import router as delegados_router
+2026-03-22 08:03:01,506: 
+2026-03-22 08:03:01,506:   File "/home/giovann/elec2026-web/backend/routes/delegados.py", line 7, in <module>
+2026-03-22 08:03:01,506:     import pandas as pd
+2026-03-22 08:03:01,506: ***************************************************
+2026-03-22 08:03:01,506: If you're seeing an import error and don't know why,
+2026-03-22 08:03:01,506: we have a dedicated help page to help you debug: 
+2026-03-22 08:03:01,506: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 08:03:01,506: ***************************************************
+2026-03-22 08:06:39,742: Error running WSGI application
+2026-03-22 08:06:39,749: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:06:41,926: Error running WSGI application
+2026-03-22 08:06:41,930: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:12:29,671: Error running WSGI application
+2026-03-22 08:12:29,677: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:14:54,470: Error running WSGI application
+2026-03-22 08:14:54,471: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:15:31,042: Error running WSGI application
+2026-03-22 08:15:31,043: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:17:39,296: Error running WSGI application
+2026-03-22 08:17:39,298: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:17:41,929: Error running WSGI application
+2026-03-22 08:17:41,929: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:23:24,172: Error running WSGI application
+2026-03-22 08:23:24,174: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:23:26,652: Error running WSGI application
+2026-03-22 08:23:26,653: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:26:23,262: Error running WSGI application
+2026-03-22 08:26:23,264: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:26:28,389: Error running WSGI application
+2026-03-22 08:26:28,390: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 08:28:49,964: Error running WSGI application
+2026-03-22 08:28:49,975:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 08:28:49,975: 
+2026-03-22 08:28:49,977:     port sys
+2026-03-22 08:28:49,977: 
+2026-03-22 08:28:49,977:          ^^^
+2026-03-22 08:28:49,977: 
+2026-03-22 08:28:49,977: SyntaxError: invalid syntax
+2026-03-22 08:28:49,978: ***************************************************
+2026-03-22 08:28:49,978: If you're seeing an import error and don't know why,
+2026-03-22 08:28:49,978: we have a dedicated help page to help you debug: 
+2026-03-22 08:28:49,978: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 08:28:49,978: ***************************************************
+2026-03-22 08:28:57,871: Error running WSGI application
+2026-03-22 08:28:57,874:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 08:28:57,874: 
+2026-03-22 08:28:57,874:     port sys
+2026-03-22 08:28:57,874: 
+2026-03-22 08:28:57,875:          ^^^
+2026-03-22 08:28:57,875: 
+2026-03-22 08:28:57,875: SyntaxError: invalid syntax
+2026-03-22 08:28:57,875: ***************************************************
+2026-03-22 08:28:57,875: If you're seeing an import error and don't know why,
+2026-03-22 08:28:57,875: we have a dedicated help page to help you debug: 
+2026-03-22 08:28:57,875: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 08:28:57,875: ***************************************************
+2026-03-22 08:35:03,252: Error running WSGI application
+2026-03-22 08:35:03,272:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 08:35:03,281: 
+2026-03-22 08:35:03,281:     El problema es que PythonAnywhere no soporta ASGI directamente. Necesitamos crear un wrapper WSGI que llame correctamente a la app ASGI de FastAPI.
+2026-03-22 08:35:03,281: 
+2026-03-22 08:35:03,282:        ^^^^^^^^
+2026-03-22 08:35:03,282: 
+2026-03-22 08:35:03,282: SyntaxError: invalid syntax
+2026-03-22 08:35:03,282: ***************************************************
+2026-03-22 08:35:03,282: If you're seeing an import error and don't know why,
+2026-03-22 08:35:03,282: we have a dedicated help page to help you debug: 
+2026-03-22 08:35:03,282: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 08:35:03,282: ***************************************************
+2026-03-22 08:35:07,231: Error running WSGI application
+2026-03-22 08:35:07,234:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 08:35:07,234: 
+2026-03-22 08:35:07,235:     El problema es que PythonAnywhere no soporta ASGI directamente. Necesitamos crear un wrapper WSGI que llame correctamente a la app ASGI de FastAPI.
+2026-03-22 08:35:07,235: 
+2026-03-22 08:35:07,235:        ^^^^^^^^
+2026-03-22 08:35:07,235: 
+2026-03-22 08:35:07,235: SyntaxError: invalid syntax
+2026-03-22 08:35:07,235: ***************************************************
+2026-03-22 08:35:07,235: If you're seeing an import error and don't know why,
+2026-03-22 08:35:07,235: we have a dedicated help page to help you debug: 
+2026-03-22 08:35:07,235: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 08:35:07,235: ***************************************************
+2026-03-22 10:14:04,235: Error running WSGI application
+2026-03-22 10:14:04,242: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 10:14:30,613: Error running WSGI application
+2026-03-22 10:14:30,615: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 10:14:41,499: Error running WSGI application
+2026-03-22 10:14:41,500: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 10:14:58,371: Error running WSGI application
+2026-03-22 10:14:58,373: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 10:15:01,331: Error running WSGI application
+2026-03-22 10:15:01,331: TypeError: FastAPI.__call__() missing 1 required positional argument: 'send'
+2026-03-22 10:37:12,588: Error running WSGI application
+2026-03-22 10:37:12,593:   File "/home/giovann/elec2026-web/backend/mysql_config.py", line 52
+2026-03-22 10:37:12,593: 
+2026-03-22 10:37:12,593:     DB_NAME = os.getenv('DB_NAME', ''giovann$elec2026'')
+2026-03-22 10:37:12,593: 
+2026-03-22 10:37:12,593:                                    ^^^^^^^^^
+2026-03-22 10:37:12,593: 
+2026-03-22 10:37:12,593: SyntaxError: invalid syntax. Perhaps you forgot a comma?
+2026-03-22 10:37:12,594:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 10:37:12,594:     from web import app as fastapi_app
+2026-03-22 10:37:12,594: 
+2026-03-22 10:37:12,594:   File "/home/giovann/elec2026-web/web.py", line 32, in <module>
+2026-03-22 10:37:12,594:     from main import app
+2026-03-22 10:37:12,595: 
+2026-03-22 10:37:12,595:   File "/home/giovann/elec2026-web/backend/main.py", line 6, in <module>
+2026-03-22 10:37:12,595:     from routes.catalog import router as catalog_router
+2026-03-22 10:37:12,595: 
+2026-03-22 10:37:12,595:   File "/home/giovann/elec2026-web/backend/routes/catalog.py", line 3, in <module>
+2026-03-22 10:37:12,596:     from db import DatabaseConnection
+2026-03-22 10:37:12,596: 
+2026-03-22 10:37:12,596:   File "/home/giovann/elec2026-web/backend/db.py", line 9, in <module>
+2026-03-22 10:37:12,596:     from mysql_config import MYSQL_CONFIG, RETRY_CONFIG
+2026-03-22 10:37:12,596: ***************************************************
+2026-03-22 10:37:12,596: If you're seeing an import error and don't know why,
+2026-03-22 10:37:12,597: we have a dedicated help page to help you debug: 
+2026-03-22 10:37:12,597: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 10:37:12,599: ***************************************************
+2026-03-22 10:37:37,437: Error running WSGI application
+2026-03-22 10:37:37,442:   File "/home/giovann/elec2026-web/backend/mysql_config.py", line 52
+2026-03-22 10:37:37,442: 
+2026-03-22 10:37:37,443:     DB_NAME = os.getenv('DB_NAME', ''giovann$elec2026'')
+2026-03-22 10:37:37,443: 
+2026-03-22 10:37:37,443:                                    ^^^^^^^^^
+2026-03-22 10:37:37,443: 
+2026-03-22 10:37:37,444: SyntaxError: invalid syntax. Perhaps you forgot a comma?
+2026-03-22 10:37:37,444:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 10:37:37,444:     from web import app as fastapi_app
+2026-03-22 10:37:37,444: 
+2026-03-22 10:37:37,445:   File "/home/giovann/elec2026-web/web.py", line 32, in <module>
+2026-03-22 10:37:37,445:     from main import app
+2026-03-22 10:37:37,445: 
+2026-03-22 10:37:37,445:   File "/home/giovann/elec2026-web/backend/main.py", line 6, in <module>
+2026-03-22 10:37:37,445:     from routes.catalog import router as catalog_router
+2026-03-22 10:37:37,445: 
+2026-03-22 10:37:37,446:   File "/home/giovann/elec2026-web/backend/routes/catalog.py", line 3, in <module>
+2026-03-22 10:37:37,446:     from db import DatabaseConnection
+2026-03-22 10:37:37,446: 
+2026-03-22 10:37:37,446:   File "/home/giovann/elec2026-web/backend/db.py", line 9, in <module>
+2026-03-22 10:37:37,447:     from mysql_config import MYSQL_CONFIG, RETRY_CONFIG
+2026-03-22 10:37:37,447: ***************************************************
+2026-03-22 10:37:37,447: If you're seeing an import error and don't know why,
+2026-03-22 10:37:37,447: we have a dedicated help page to help you debug: 
+2026-03-22 10:37:37,447: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 10:37:37,447: ***************************************************
+2026-03-22 10:37:39,515: Error running WSGI application
+2026-03-22 10:37:39,516:   File "/home/giovann/elec2026-web/backend/mysql_config.py", line 52
+2026-03-22 10:37:39,516: 
+2026-03-22 10:37:39,516:     DB_NAME = os.getenv('DB_NAME', ''giovann$elec2026'')
+2026-03-22 10:37:39,516: 
+2026-03-22 10:37:39,516:                                    ^^^^^^^^^
+2026-03-22 10:37:39,517: 
+2026-03-22 10:37:39,517: SyntaxError: invalid syntax. Perhaps you forgot a comma?
+2026-03-22 10:37:39,517:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 10:37:39,517:     from web import app as fastapi_app
+2026-03-22 10:37:39,517: 
+2026-03-22 10:37:39,517:   File "/home/giovann/elec2026-web/web.py", line 32, in <module>
+2026-03-22 10:37:39,517:     from main import app
+2026-03-22 10:37:39,517: 
+2026-03-22 10:37:39,517:   File "/home/giovann/elec2026-web/backend/main.py", line 6, in <module>
+2026-03-22 10:37:39,518:     from routes.catalog import router as catalog_router
+2026-03-22 10:37:39,518: 
+2026-03-22 10:37:39,518:   File "/home/giovann/elec2026-web/backend/routes/catalog.py", line 3, in <module>
+2026-03-22 10:37:39,518:     from db import DatabaseConnection
+2026-03-22 10:37:39,518: 
+2026-03-22 10:37:39,518:   File "/home/giovann/elec2026-web/backend/db.py", line 9, in <module>
+2026-03-22 10:37:39,518:     from mysql_config import MYSQL_CONFIG, RETRY_CONFIG
+2026-03-22 10:37:39,519: ***************************************************
+2026-03-22 10:37:39,519: If you're seeing an import error and don't know why,
+2026-03-22 10:37:39,519: we have a dedicated help page to help you debug: 
+2026-03-22 10:37:39,519: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 10:37:39,519: ***************************************************
+2026-03-22 10:37:40,319: Error running WSGI application
+2026-03-22 10:37:40,323:   File "/home/giovann/elec2026-web/backend/mysql_config.py", line 52
+2026-03-22 10:37:40,323: 
+2026-03-22 10:37:40,324:     DB_NAME = os.getenv('DB_NAME', ''giovann$elec2026'')
+2026-03-22 10:37:40,324: 
+2026-03-22 10:37:40,324:                                    ^^^^^^^^^
+2026-03-22 10:37:40,324: 
+2026-03-22 10:37:40,324: SyntaxError: invalid syntax. Perhaps you forgot a comma?
+2026-03-22 10:37:40,324:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 10:37:40,325:     from web import app as fastapi_app
+2026-03-22 10:37:40,325: 
+2026-03-22 10:37:40,325:   File "/home/giovann/elec2026-web/web.py", line 32, in <module>
+2026-03-22 10:37:40,325:     from main import app
+2026-03-22 10:37:40,325: 
+2026-03-22 10:37:40,326:   File "/home/giovann/elec2026-web/backend/main.py", line 6, in <module>
+2026-03-22 10:37:40,326:     from routes.catalog import router as catalog_router
+2026-03-22 10:37:40,326: 
+2026-03-22 10:37:40,326:   File "/home/giovann/elec2026-web/backend/routes/catalog.py", line 3, in <module>
+2026-03-22 10:37:40,326:     from db import DatabaseConnection
+2026-03-22 10:37:40,326: 
+2026-03-22 10:37:40,327:   File "/home/giovann/elec2026-web/backend/db.py", line 9, in <module>
+2026-03-22 10:37:40,327:     from mysql_config import MYSQL_CONFIG, RETRY_CONFIG
+2026-03-22 10:37:40,327: ***************************************************
+2026-03-22 10:37:40,327: If you're seeing an import error and don't know why,
+2026-03-22 10:37:40,327: we have a dedicated help page to help you debug: 
+2026-03-22 10:37:40,327: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 10:37:40,328: ***************************************************
+2026-03-22 10:37:41,095: Error running WSGI application
+2026-03-22 10:37:41,098:   File "/home/giovann/elec2026-web/backend/mysql_config.py", line 52
+2026-03-22 10:37:41,099: 
+2026-03-22 10:37:41,099:     DB_NAME = os.getenv('DB_NAME', ''giovann$elec2026'')
+2026-03-22 10:37:41,099: 
+2026-03-22 10:37:41,099:                                    ^^^^^^^^^
+2026-03-22 10:37:41,099: 
+2026-03-22 10:37:41,100: SyntaxError: invalid syntax. Perhaps you forgot a comma?
+2026-03-22 10:37:41,101:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 10:37:41,101:     from web import app as fastapi_app
+2026-03-22 10:37:41,101: 
+2026-03-22 10:37:41,101:   File "/home/giovann/elec2026-web/web.py", line 32, in <module>
+2026-03-22 10:37:41,101:     from main import app
+2026-03-22 10:37:41,101: 
+2026-03-22 10:37:41,102:   File "/home/giovann/elec2026-web/backend/main.py", line 6, in <module>
+2026-03-22 10:37:41,102:     from routes.catalog import router as catalog_router
+2026-03-22 10:37:41,102: 
+2026-03-22 10:37:41,103:   File "/home/giovann/elec2026-web/backend/routes/catalog.py", line 3, in <module>
+2026-03-22 10:37:41,103:     from db import DatabaseConnection
+2026-03-22 10:37:41,103: 
+2026-03-22 10:37:41,103:   File "/home/giovann/elec2026-web/backend/db.py", line 9, in <module>
+2026-03-22 10:37:41,104:     from mysql_config import MYSQL_CONFIG, RETRY_CONFIG
+2026-03-22 10:37:41,104: ***************************************************
+2026-03-22 10:37:41,104: If you're seeing an import error and don't know why,
+2026-03-22 10:37:41,104: we have a dedicated help page to help you debug: 
+2026-03-22 10:37:41,104: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 10:37:41,105: ***************************************************
+2026-03-22 10:37:41,912: Error running WSGI application
+2026-03-22 10:37:41,913:   File "/home/giovann/elec2026-web/backend/mysql_config.py", line 52
+2026-03-22 10:37:41,913: 
+2026-03-22 10:37:41,913:     DB_NAME = os.getenv('DB_NAME', ''giovann$elec2026'')
+2026-03-22 10:37:41,914: 
+2026-03-22 10:37:41,914:                                    ^^^^^^^^^
+2026-03-22 10:37:41,914: 
+2026-03-22 10:37:41,914: SyntaxError: invalid syntax. Perhaps you forgot a comma?
+2026-03-22 10:37:41,914:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 24, in <module>
+2026-03-22 10:37:41,914:     from web import app as fastapi_app
+2026-03-22 10:37:41,915: 
+2026-03-22 10:37:41,915:   File "/home/giovann/elec2026-web/web.py", line 32, in <module>
+2026-03-22 10:37:41,915:     from main import app
+2026-03-22 10:37:41,915: 
+2026-03-22 10:37:41,915:   File "/home/giovann/elec2026-web/backend/main.py", line 6, in <module>
+2026-03-22 10:37:41,915:     from routes.catalog import router as catalog_router
+2026-03-22 10:37:41,915: 
+2026-03-22 10:37:41,915:   File "/home/giovann/elec2026-web/backend/routes/catalog.py", line 3, in <module>
+2026-03-22 10:37:41,915:     from db import DatabaseConnection
+2026-03-22 10:37:41,916: 
+2026-03-22 10:37:41,916:   File "/home/giovann/elec2026-web/backend/db.py", line 9, in <module>
+2026-03-22 10:37:41,916:     from mysql_config import MYSQL_CONFIG, RETRY_CONFIG
+2026-03-22 10:37:41,916: ***************************************************
+2026-03-22 10:37:41,916: If you're seeing an import error and don't know why,
+2026-03-22 10:37:41,916: we have a dedicated help page to help you debug: 
+2026-03-22 10:37:41,916: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 10:37:41,916: ***************************************************
+2026-03-22 11:00:26,423: Error running WSGI application
+2026-03-22 11:00:26,425: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 11:00:30,317: Error running WSGI application
+2026-03-22 11:00:30,319: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 11:03:16,930: Error running WSGI application
+2026-03-22 11:03:16,930: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 11:04:41,410: Error running WSGI application
+2026-03-22 11:04:41,411: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 11:13:52,042: Error running WSGI application
+2026-03-22 11:13:52,052:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 11:13:52,053: 
+2026-03-22 11:13:52,053:     ============================================
+2026-03-22 11:13:52,053: 
+2026-03-22 11:13:52,062: IndentationError: unexpected indent
+2026-03-22 11:13:52,062: ***************************************************
+2026-03-22 11:13:52,062: If you're seeing an import error and don't know why,
+2026-03-22 11:13:52,063: we have a dedicated help page to help you debug: 
+2026-03-22 11:13:52,063: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 11:13:52,063: ***************************************************
+2026-03-22 11:13:59,584: Error running WSGI application
+2026-03-22 11:13:59,585:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 11:13:59,585: 
+2026-03-22 11:13:59,585:     ============================================
+2026-03-22 11:13:59,585: 
+2026-03-22 11:13:59,586: IndentationError: unexpected indent
+2026-03-22 11:13:59,586: ***************************************************
+2026-03-22 11:13:59,586: If you're seeing an import error and don't know why,
+2026-03-22 11:13:59,586: we have a dedicated help page to help you debug: 
+2026-03-22 11:13:59,586: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 11:13:59,586: ***************************************************
+2026-03-22 11:18:23,003: Error running WSGI application
+2026-03-22 11:18:23,007:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 11:18:23,007: 
+2026-03-22 11:18:23,007:     ============================================
+2026-03-22 11:18:23,008: 
+2026-03-22 11:18:23,008: IndentationError: unexpected indent
+2026-03-22 11:18:23,008: ***************************************************
+2026-03-22 11:18:23,008: If you're seeing an import error and don't know why,
+2026-03-22 11:18:23,008: we have a dedicated help page to help you debug: 
+2026-03-22 11:18:23,008: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 11:18:23,008: ***************************************************
+2026-03-22 11:18:24,843: Error running WSGI application
+2026-03-22 11:18:24,853:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 11:18:24,853: 
+2026-03-22 11:18:24,854:     ============================================
+2026-03-22 11:18:24,854: 
+2026-03-22 11:18:24,854: IndentationError: unexpected indent
+2026-03-22 11:18:24,854: ***************************************************
+2026-03-22 11:18:24,854: If you're seeing an import error and don't know why,
+2026-03-22 11:18:24,854: we have a dedicated help page to help you debug: 
+2026-03-22 11:18:24,854: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 11:18:24,854: ***************************************************
+2026-03-22 11:20:47,170: Error running WSGI application
+2026-03-22 11:20:47,171:   File "/var/www/giovann_pythonanywhere_com_wsgi.py", line 1
+2026-03-22 11:20:47,171: 
+2026-03-22 11:20:47,171:     ============================================
+2026-03-22 11:20:47,171: 
+2026-03-22 11:20:47,171: IndentationError: unexpected indent
+2026-03-22 11:20:47,171: ***************************************************
+2026-03-22 11:20:47,171: If you're seeing an import error and don't know why,
+2026-03-22 11:20:47,172: we have a dedicated help page to help you debug: 
+2026-03-22 11:20:47,172: https://help.pythonanywhere.com/pages/DebuggingImportError/
+2026-03-22 11:20:47,172: ***************************************************
+2026-03-22 11:24:32,860: Error running WSGI application
+2026-03-22 11:24:32,861: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 11:25:42,239: Error running WSGI application
+2026-03-22 11:25:42,241: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 11:28:06,638: Error running WSGI application
+2026-03-22 11:28:06,643: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 11:28:06,643: Error running WSGI application
+2026-03-22 11:28:06,645: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 12:21:04,399: Error running WSGI application
+2026-03-22 12:21:04,401: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 12:49:50,858: Error running WSGI application
+2026-03-22 12:49:50,861: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'
+2026-03-22 12:49:54,962: Error running WSGI application
+2026-03-22 12:49:54,964: TypeError: WsgiToAsgi.__call__() missing 1 required positional argument: 'send'

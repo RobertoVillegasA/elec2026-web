@@ -5,12 +5,11 @@ from typing import Optional
 from db import verificar_usuario
 from jose import jwt
 from datetime import datetime, timedelta
-import os
 
 router = APIRouter()
 
-# Configuración JWT - Usa la variable de entorno SECRET_KEY
-SECRET_KEY = os.getenv('SECRET_KEY', 'elecciones2026-secreto-muy-seguro')
+# Configuración JWT (ajusta SECRET_KEY en producción)
+SECRET_KEY = "elecciones2026-secreto-muy-seguro"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 horas
 
