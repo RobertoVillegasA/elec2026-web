@@ -1,6 +1,17 @@
 # backend/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import logging
+import sys
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
+logger.info("Iniciando backend main.py...")
 
 # Routers
 from routes.catalog import router as catalog_router
@@ -51,7 +62,7 @@ elif is_render:
     ]
 elif is_pythonanywhere:
     allowed_origins = base_origins + [
-        "https://tu_usuario.pythonanywhere.com",
+        "https://giovann.pythonanywhere.com",
     ]
 else:
     # Desarrollo local
