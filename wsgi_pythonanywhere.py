@@ -1,8 +1,8 @@
 # ============================================
 # WSGI Configuration for PythonAnywhere
 # ============================================
-# Sitio: tu_usuario.pythonanywhere.com
-# Archivo: /var/www/tu_usuario_pythonanywhere_com_wsgi.py
+# Sitio: giovann.pythonanywhere.com
+# Archivo: /var/www/giovann_pythonanywhere_com_wsgi.py
 # ============================================
 
 import sys
@@ -12,9 +12,7 @@ import traceback
 # ============================================
 # CONFIGURACIÓN DE RUTAS - EDITAR AQUÍ
 # ============================================
-# Reemplaza 'tu_usuario' con tu usuario de PythonAnywhere
-# Ejemplo: '/home/roby_/elec2026-web'
-username = 'tu_usuario'  # ← CAMBIA ESTO
+username = 'giovann'  # ← Tu usuario de PythonAnywhere
 project_home = f'/home/{username}/elec2026-web'
 
 # Agregar el proyecto al path de Python
@@ -31,18 +29,17 @@ if backend_path not in sys.path:
 # ============================================
 
 # 🔑 SECRET_KEY - Genera una con: python -c "import secrets; print(secrets.token_urlsafe(32))"
-# Puedes usar esta temporal para pruebas:
-os.environ['SECRET_KEY'] = 'electoral_2026_bolivia_segura_clave_temporal_1234567890'
+os.environ['SECRET_KEY'] = 'electoral_2026_bolivia_segura_clave_temporal_giovann_2026'
 
 # Base de datos PythonAnywhere
-os.environ['DB_HOST'] = f'{username}.mysql.pythonanywhere-services.com'
-os.environ['DB_NAME'] = 'elec2026'
-os.environ['DB_USER'] = username
-os.environ['DB_PASSWORD'] = 'tu_password_de_pythonanywhere'  # ← CAMBIA ESTO
+os.environ['DB_HOST'] = 'giovann.mysql.pythonanywhere-services.com'
+os.environ['DB_NAME'] = 'giovann$elec2026'  # ← El $ es importante
+os.environ['DB_USER'] = 'giovann'
+os.environ['DB_PASSWORD'] = 'TU_CONTRASENA_AQUI'  # ← CAMBIA ESTO por tu contraseña real
 os.environ['DB_PORT'] = '3306'
 
 # CORS - Tu dominio en PythonAnywhere
-os.environ['CORS_ORIGIN'] = f'https://{username}.pythonanywhere.com'
+os.environ['CORS_ORIGIN'] = 'https://giovann.pythonanywhere.com'
 
 # Configuración de la app
 os.environ['DEBUG'] = 'False'

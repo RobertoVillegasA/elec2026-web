@@ -17,7 +17,7 @@ Guía completa para desplegar el Sistema Electoral Bolivia 2026 en PythonAnywher
 9. [Verificar Despliegue](#9-verificar-despliegue)
 10. [Solución de Problemas](#10-solución-de-problemas)
 
----
+---password myseql libre2026!giovan
 
 ## 1. Crear Cuenta
 
